@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <chrono>
+#include <memory>
 
 /**
  * Questions to consider:
@@ -14,7 +15,7 @@ struct Task {
     int taskID;
     
     // When the task was started
-    std::chrono::time_point startTime;
+    std::chrono::system_clock::time_point startTime;
 
     // Duration to completion
     std::chrono::microseconds timeToCompletion;
@@ -42,20 +43,21 @@ class GPUSimulator{
         double DRAMSpeed; 
 
         // Record all the tasks ran on this GPU. Arranged in order of addition unless context switch happens
-        std::vector<std::shared_ptr<task>> taskQueue;
+        std::vector<std::shared_ptr<Task>> taskQueue;
 
         // taskID being executed right now
         int currentTaskID;
 
         void updateTaskQueue();
-        
+
     public:
+        
         // Constructor with initial properties
         GPUSimulator(int memorySize, double DRAMSpeed);
 
         // Add a task to the end of the queue. Returns -1 if cannot put on GPU.
         // Else returns the taskID. dataSize in Mb
-        int addTask(std::chrono::microseonds duration, int dataSize);
+        int addTask(std::chrono::microseconds duration, int dataSize);
 
         // Pass in a taskID to which the GPU should context switch out of order. Method sleeps to account for 
         // memory copying overhead. Returns -1 if task is not found. Else returns 1
@@ -68,7 +70,7 @@ class GPUSimulator{
         int getNumTasksInQueue();
 
         // Returns the time for GPU to finish processing all pending tasks
-        std::chrono::milliseconds getTimeUntilFree();
+        std::chrono::microseconds getTimeUntilFree();
 
         // Returns the current taskID being executed. -1 if no task is being run
         int getCurrentTaskID();
