@@ -25,8 +25,8 @@ class FifoListener():
                 if not line: # EOF
                     break
                 yield line
-        fd = os.open(self.filename, os.O_RDONLY | os.O_NONBLOCK)
-        print('Opened file')
+        fd = open(self.filename)
+        loop = asyncio.get_event_loop()
         async for line in stream_as_generator(loop, fd):
             print(line)
             handler(line)
@@ -39,8 +39,13 @@ class FifoWriter():
 
     def __init__(self, filename):
         self.filename = filename
+        try:
+            os.mkfifo(filename)
+        except:
+            pass
 
-    async def write_to_stream(self, content):
+    def write_to_stream(self, content):
+        print('here')
         try:
             writer = open(self.filename)
         except:

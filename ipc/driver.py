@@ -1,4 +1,5 @@
 from fifo import FifoListener, FifoWriter
+import asyncio
 
 class Driver():
 
@@ -12,6 +13,7 @@ class Driver():
 
     async def start(self):
         print('Started driver' + self.driver_name)
+        await asyncio.sleep(2)
         await self.listener.listen()
 
 
