@@ -10,4 +10,4 @@ simulator: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean:
-	rm *.o simulator
+	rm -f *.o simulator
