@@ -26,7 +26,7 @@ class Querier():
     async def querier(self):
         print('In querier')
         #await asyncio.sleep(2)
-        self.writer.write_to_stream('a;Helo')
+        # self.writer.write_to_stream('a;Helo')
         # r = FifoReader('server_resp', handler)
         print('Eneded')
         await r.listen()

@@ -8,12 +8,11 @@ class Driver():
         self.listener = FifoListener('req_' + driver_name, self.def_handler)
         self.writer = FifoWriter('resp_' + driver_name)
 
-    def def_handler(str):
-        self.writer.write(str.lower())
+    def def_handler(self, str):
+        self.writer.write_to_stream(str.lower())
 
-    async def start(self):
+    def start(self):
         print('Started driver' + self.driver_name)
-        await asyncio.sleep(2)
-        await self.listener.listen()
+        self.listener.listen()
 
 
