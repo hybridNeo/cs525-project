@@ -1,19 +1,23 @@
 from fifo import FifoListener, FifoWriter
-class Handle():
-    def handler(str):
-        print(str)
+from multiprocessing import Process
 
-    def __init__(self, filename):
-        def handler(str):
-            print(str)
+class Handle():
+    def handler(self, str):
+        self.respond(str)
+
+    def __init__(self, filename, responder):
         self.filename = filename
         self.writer = FifoWriter('req_' + filename)
-        self.reader = FifoListener('resp_' + filename, handler)
+        self.reader = FifoListener('resp_' + filename, self.handler)
+        self.responder = responder
 
-    async def start(self):
-        await self.reader.listen()
+    def start(self):
+        self.reader.listen()
 
-    async def write(self,content):
+    def respond(self,content):
+        self.responder.write_to_stream(content)
+
+    def write(self,content):
         self.writer.write_to_stream(content)
 
 class DriverController():
@@ -21,20 +25,21 @@ class DriverController():
     def __init__(self, dlist):
         self.handles = {}
         self.server = FifoListener('server_req',self.handler)
-        self.responder = FifoWriter('server_resp')
+        responder = FifoWriter('server_resp')
         for i in dlist:
-            self.handles[i] = Handle(i)
+            self.handles[i] = Handle(i, responder)
 
 
     def handler(self, inp):
         a,b = inp.split(';')
-        self.handles[i].write(b)
+        self.handles[a].write(b)
 
-    async def listen(self):
-        print('Started DC')
+    def listen(self):
+        print('[DRIVER_CONTROLLER]Starting')
         for i in self.handles:
-            await self.handles[i].start()
-        await server.listen()
+            p = Process(target=self.handles[i].start)
+            p.start()
+        self.server.listen()
 
     def bad_handle(self,a,b):
         self.handles[a].write(b)

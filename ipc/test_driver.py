@@ -3,6 +3,7 @@ from multiprocessing import Process
 from fifo import FifoListener, FifoWriter
 import asyncio
 import os
+import time
 
 def handler(str):
     print('[test] output from driver is ' + str)
@@ -23,8 +24,11 @@ def test():
     fd = open('req_test', 'w')
     print('[test] opened file')
     fd.write('Test')
+    fd.close()
+    time.sleep(1)
+    fd = open('req_test', 'w')
     print('[test] wrote to file')
-
+    fd.write('BEST')
 def main():
     print('In main')
     driver = Driver("test")

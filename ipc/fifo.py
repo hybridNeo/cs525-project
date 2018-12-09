@@ -12,14 +12,16 @@ class FifoListener():
         try:
             os.mkfifo(filename)
         except:
-            print("FileExistException: the file already exists.")
+            pass
+            # print("FileExistException: the file already exists.")
 
 
     def listen(self):
 
-        print('[' + self.filename + '] In Listen')
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.listen_helper())
+        # print('[' + self.filename + '] In Listen')
+        while True:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self.listen_helper())
 
     async def listen_helper(self):
         async def stream_as_generator(loop, stream):
@@ -36,8 +38,8 @@ class FifoListener():
 
         loop = asyncio.get_event_loop()
         async for line in stream_as_generator(loop, fd):
-            line = line.decode("utf-8")
-            print('[' + self.filename + ']' + str(line))
+            line = line.decode("utf-8").rstrip()
+            # print('[' + self.filename + ']' + str(line))
             self.handler(line)
 
     def clean(self):
@@ -54,10 +56,11 @@ class FifoWriter():
             pass
 
     def write_to_stream(self, content):
-        print(self.filename)
+        # print(self.filename)
         try:
             writer = open(self.filename, 'w')
         except:
-            print("FileNotFoundException")
-        print('In write to stream')
-        writer.write(content)
+            pass
+            # print("FileNotFoundException")
+        writer.write(content + '\n' )
+        writer.close()
