@@ -7,8 +7,8 @@
 #include <iterator>
 
 int main(int argc, char * argv[]){
-    if (argc != 5 || argc != 6){
-        std::cout << "Usage: " << argv[0] << "<driverName> <memorySize in MB> <computeCapacity> <DRAMSpeed in Mb/s> <contextSwitchPenalty in microseconds (optional)> \n";
+    if (argc != 5 && argc != 6){
+        std::cout << "Usage: " << argv[0] << "<driverName> <memorySize in MB> <computeCapacity> <DRAMSpeed in Mb/s> <contextSwitchPenalty in milliseconds (optional)> \n";
         return 0;
     } 
     std::string fileInput = "req_" + (std::string(argv[1]));
@@ -20,7 +20,7 @@ int main(int argc, char * argv[]){
     if (argc == 6){
         int contextSwitchPenalty = atoi(argv[5]);
     } 
-    AcceleratorSimulator acc(memorySize, computeCapacity, DRAMSpeed, std::chrono::microseconds(contextSwitchPenalty));
+    AcceleratorSimulator acc(memorySize, computeCapacity, DRAMSpeed, std::chrono::milliseconds(contextSwitchPenalty));
     std::ifstream inputFifo(fileInput);
     std::ofstream outputFifo(fileOutput);
     std::string line;
@@ -32,7 +32,7 @@ int main(int argc, char * argv[]){
             std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                     std::istream_iterator<std::string>());
             if (tokens[0] == "addTask"){
-                auto taskDuration = std::chrono::microseconds(std::stoi(tokens[1]));
+                auto taskDuration = std::chrono::milliseconds(std::stoi(tokens[1]));
                 int taskMemorySize = std::stoi(tokens[2]);
                 int taskComputeSize = std::stoi(tokens[3]);
                 int taskID = std::stoi(tokens[4]);
@@ -40,32 +40,39 @@ int main(int argc, char * argv[]){
             }
             else if (tokens[0] == "contextSwitch"){
                 int taskID = std::stoi(tokens[1]);
-                outputFifo << acc.contextSwitch(taskID) << "\n";
+                std::vector<std::shared_ptr<Task>> tasksReplaced;
+                outputFifo << acc.contextSwitch(taskID, tasksReplaced) << " " << tasksReplaced.size() << std::endl;
+                for (auto taskPtr : tasksReplaced){
+                     //std::chrono::duration_cast<std::chrono::minutes>(sec).count()
+                    outputFifo << (std::chrono::duration_cast<std::chrono::milliseconds>(taskPtr->timeToCompletion)).count() << " " << taskPtr->dataSize << " " << taskPtr->computeUnitsRequired << " " << taskPtr->taskID << std::endl;
+                }
             }
             else if (tokens[0] == "computeCapacityAvailable"){
-                outputFifo << acc.computeCapacityAvailable() << "\n";
+                outputFifo << acc.computeCapacityAvailable() << std::endl;
             }
             else if (tokens[0] == "memoryAvailable"){
-                outputFifo << acc.memoryAvailable() << "\n";
+                outputFifo << acc.memoryAvailable() << std::endl;
             }
             else if (tokens[0] == "getNumTasksInQueue"){
-                outputFifo << acc.getNumTasksInQueue() << "\n";
+                outputFifo << acc.getNumTasksInQueue() << std::endl;
             }
             else if (tokens[0] == "getCurrentTaskIDs"){
                 for (int taskID : acc.getCurrentTaskIDs()){
                     outputFifo << taskID << " ";
                 }
-                outputFifo << "\n";
+                outputFifo << std::endl; 
             }
             else if (tokens[0] == "returnWhenDone"){
                 acc.returnWhenDone(); 
-                outputFifo << "Done \n";
+                outputFifo << "Done" << std::endl;
                 return 0;
             }
             else{
-                outputFifo << "Invalid input \n";
+                outputFifo << "Invalid input " << std::endl;
             }
         }
+        acc.returnWhenDone();
+        outputFifo << "Done" << std::endl;
         inputFifo.close();
         outputFifo.close();
     } else std::cout << "Unable to open file";

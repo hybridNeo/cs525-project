@@ -42,7 +42,6 @@ int AcceleratorSimulator::addTask(std::chrono::nanoseconds duration, double data
     }
     else{
         // Add it to task queue for later
-        std::cout << "Adding to task queue " << newTask->taskID << std::endl;
         taskQueue.push_back(newTask);
     }
     return newTask->taskID;
@@ -106,9 +105,8 @@ void AcceleratorSimulator::startThread(std::shared_ptr<Task> task){
         task->startTime = std::chrono::system_clock::now();
         contextSwitch = consumer->contextSwitchCV.wait_for(contextSwitchLock, task->timeToCompletion);
         auto timeSpent = std::chrono::system_clock::now() - task->startTime;
-        this->endThread(task, consumer);
-        std::cout << "Finished task " << task->taskID << std::endl;
         if (contextSwitch == std::cv_status::timeout){
+            this->endThread(task, consumer);
             // Task completed 
             task->inProgress = false;
             task->isComplete = true; 
@@ -122,7 +120,6 @@ void AcceleratorSimulator::startThread(std::shared_ptr<Task> task){
                 if (this->computeCapacityAvailableWithLock() >= newTask->computeUnitsRequired &&
                         this->memoryAvailableWithLock() >= newTask->dataSize){
                     // Start the task if enough resources are available
-                    std::cout << "Starting task from queue " << newTask->taskID << std::endl;
                     this->startTask(newTask);
                     std::thread t1(&AcceleratorSimulator::startThread, this, newTask);
                     t1.detach();
@@ -146,26 +143,28 @@ void AcceleratorSimulator::startThread(std::shared_ptr<Task> task){
             task->inProgress = false;
             task->isComplete = false;
             task->timeToCompletion -= std::chrono::duration_cast<std::chrono::nanoseconds>(timeSpent);
+            this->endThread(task, consumer);
         }
     } else{
         // Memory transfer interrupted 
-
         this->endThread(task, consumer);
         // Task incomplete
         task->inProgress = false;
         task->isComplete = false;
     }
-    {
+    /*{
+        std::cout << "Locking resources" << std::endl;
         std::lock_guard<std::mutex> lock(this->resources);
         this->taskQueue.insert(this->taskQueue.begin(), task);
-    }
+        std::cout << "Unlocking resources" << std::endl;
+    }*/
 }
 
 bool compareConsumers(std::shared_ptr<Consumer> c1, std::shared_ptr<Consumer> c2){
     return (c1->task->timeToCompletion + c1->task->memoryOverhead >= c2->task->timeToCompletion + c2->task->memoryOverhead);
 }
 
-int AcceleratorSimulator::contextSwitch(int taskID){
+int AcceleratorSimulator::contextSwitch(int taskID, std::vector<std::shared_ptr<Task>>& tasksReplaced){
     std::unique_lock<std::mutex> lock(this->resources);
     std::shared_ptr<Task> task;
     for (auto it = this->taskQueue.begin() ; it != this->taskQueue.end(); ++it){
@@ -193,6 +192,8 @@ int AcceleratorSimulator::contextSwitch(int taskID){
                     freeCompute += threadQueue[index]->task->computeUnitsRequired;
                     freeMemory += threadQueue[index]->task->dataSize;
                     threadQueue[index]->contextSwitchCV.notify_all();
+                    tasksReplaced.push_back(threadQueue[index]->task);
+                    index++;
                 }
                 freeCompute = this->computeCapacityAvailableWithLock();
                 freeMemory = this->memoryAvailableWithLock();
