@@ -10,6 +10,7 @@
 import numpy as np
 from est import est
 from uprank import upRank
+from est import getPredecessors
 
 INF = float("inf")
 
@@ -57,13 +58,16 @@ def staticSchedule(tGraph, computeCost):
             estProcs.append([tEst,tEft])
 
         # Find the min EST
-        EST = zip(*estProcs)[0]
+        EST = zip(*estProcs)[1]
         minESTIdx = min(xrange(len(EST)), key=EST.__getitem__)
 
-        print("For node %d we have ESTs returned as " % node, estProcs, " and min EST is for %d proc" % minESTIdx)
+        # print("For node %d we have ESTs returned as " % node, estProcs, " and min EST is for %d proc" % minESTIdx)
 
         #Update the schedule - [node, EST, EFT, proc]
-        taskSchedule[node] = [node, estProcs[minESTIdx][0], estProcs[minESTIdx][1], minESTIdx]
+        taskSchedule[node] = {'time': (estProcs[minESTIdx][0], estProcs[minESTIdx][1]),
+                                    'predecessors': getPredecessors(tGraph, node), 'proc': minESTIdx}
+
+        # print("Added the task schedule", taskSchedule[node])
 
     return taskSchedule
 

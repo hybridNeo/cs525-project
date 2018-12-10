@@ -40,6 +40,8 @@ def est(tGraph, computeCost, taskSchedule, node, proc):
         # Get the successors and run through them.
         pred = getPredecessors(tGraph, node)
 
+        # print("The predecessors of %d are " % node, pred)
+
         # Actual finish times
         p_aft = []
 
@@ -47,7 +49,7 @@ def est(tGraph, computeCost, taskSchedule, node, proc):
         for p in pred:
             if(p not in taskSchedule.keys()):
                 sys.exit("Error, all predecessors are not scheduled." + str(p))
-            p_aft.append(taskSchedule[p][2])
+            p_aft.append(taskSchedule[p]['time'][1])
 
         aft = max(p_aft)
 
@@ -78,7 +80,7 @@ def getAvail(taskSchedule, proc):
         return the next availability of the given proc
     """
     # Retrieve all the nodes that are expected to run on this proc.
-    allTasks = [sched[2] for sched in taskSchedule.values() if  sched[3]==proc]
+    allTasks = [sched['time'][1] for sched in taskSchedule.values() if  sched['proc']==proc]
 
     # return the max eft
     return max(allTasks) if allTasks else 0
