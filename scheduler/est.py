@@ -34,7 +34,7 @@ def est(tGraph, computeCost, taskSchedule, node, proc):
     if(node == tGraph.entryNode):
         # This is the entry node, can start immediately.
 
-        return 0,0
+        return 0,computeCost[node][proc]
 
     else:
         # Get the successors and run through them.
@@ -45,7 +45,10 @@ def est(tGraph, computeCost, taskSchedule, node, proc):
 
         # Run through all of them and get their AFT
         for p in pred:
+            if(p not in taskSchedule.keys()):
+                sys.exit("Error, all predecessors are not scheduled." + str(p))
             p_aft.append(taskSchedule[p][2])
+
         aft = max(p_aft)
 
         # Run through the processor and find its availability
@@ -91,12 +94,13 @@ if __name__ == '__main__':
                  [-1,0,0,0,0,0,0,1,1,0],
                  [-1,0,0,0,0,0,1,0,0,0],
                  [-1,0,0,0,0,0,0,1,1,0],
-                 [-1,0,0,0,0,0,0,0,0,1,0],
-                 [-1,0,0,0,0,0,0,0,1,0,0],
+                 [-1,0,0,0,0,0,0,0,1,0],
+                 [-1,0,0,0,0,0,0,1,0,0],
                  [0,0,-1,0,0,0,0,0,0,1],
                  [0,-1,0,-1,0,-1,0,0,0,1],
                  [0,-1,0,-1,-1,0,0,0,0,1],
                  [0,0,0,0,0,0,-1,-1,-1,0]]
+
     entryNode = 0
     exitNode = 9
     numTasks = 10
