@@ -8,11 +8,11 @@ import time
 
 
 
-drivers = ['a','b']
+drivers = [('a',),('b',)]
 def start_drivers():
     d = []
     for i in drivers:
-        d.append(Driver(i))
+        d.append(Driver(i[0]))
 
     res = []
     for i in d:

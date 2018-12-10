@@ -20,14 +20,17 @@ int main(int argc, char * argv[]){
     if (argc == 6){
         int contextSwitchPenalty = atoi(argv[5]);
     } 
-    AcceleratorSimulator acc(memorySize, computeCapacity, DRAMSpeed, std::chrono::milliseconds(contextSwitchPenalty));
-    std::ifstream inputFifo(fileInput);
+    std::cout << "Created simulator" << std::endl;
     std::ofstream outputFifo(fileOutput);
+    std::ifstream inputFifo(fileInput);
+    AcceleratorSimulator acc(memorySize, computeCapacity, DRAMSpeed, std::chrono::milliseconds(contextSwitchPenalty), outputFifo);
     std::string line;
     if (inputFifo.is_open())
     {
+        std::cout << "Input fifo is open" << std::endl;
         while ( getline (inputFifo,line) )
         {
+            std::cout << "Got a line: " << line << std::endl;
             std::istringstream iss(line);
             std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                     std::istream_iterator<std::string>());
@@ -44,19 +47,20 @@ int main(int argc, char * argv[]){
                 outputFifo << acc.contextSwitch(taskID, tasksReplaced) << " " << tasksReplaced.size() << std::endl;
                 for (auto taskPtr : tasksReplaced){
                      //std::chrono::duration_cast<std::chrono::minutes>(sec).count()
-                    outputFifo << (std::chrono::duration_cast<std::chrono::milliseconds>(taskPtr->timeToCompletion)).count() << " " << taskPtr->dataSize << " " << taskPtr->computeUnitsRequired << " " << taskPtr->taskID << std::endl;
+                    outputFifo << "taskFlushed" << (std::chrono::duration_cast<std::chrono::milliseconds>(taskPtr->timeToCompletion)).count() << " " << taskPtr->dataSize << " " << taskPtr->computeUnitsRequired << " " << taskPtr->taskID << std::endl;
                 }
             }
             else if (tokens[0] == "computeCapacityAvailable"){
-                outputFifo << acc.computeCapacityAvailable() << std::endl;
+                outputFifo << "computeCapacity " << acc.computeCapacityAvailable() << std::endl;
             }
             else if (tokens[0] == "memoryAvailable"){
-                outputFifo << acc.memoryAvailable() << std::endl;
+                outputFifo << "memoryAvailable " << acc.memoryAvailable() << std::endl;
             }
             else if (tokens[0] == "getNumTasksInQueue"){
-                outputFifo << acc.getNumTasksInQueue() << std::endl;
+                outputFifo << "numTasks " << acc.getNumTasksInQueue() << std::endl;
             }
             else if (tokens[0] == "getCurrentTaskIDs"){
+                outputFifo << "currentIDs ";
                 for (int taskID : acc.getCurrentTaskIDs()){
                     outputFifo << taskID << " ";
                 }
@@ -71,11 +75,12 @@ int main(int argc, char * argv[]){
                 outputFifo << "Invalid input " << std::endl;
             }
         }
+        std::cout << "Input fifo has been closed" << std::endl;
         acc.returnWhenDone();
         outputFifo << "Done" << std::endl;
         inputFifo.close();
         outputFifo.close();
-    } else std::cout << "Unable to open file";
+    } else std::cout << "Unable to open file" << std::endl;
 
 }
 

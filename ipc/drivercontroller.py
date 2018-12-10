@@ -2,8 +2,8 @@ from fifo import FifoListener, FifoWriter
 from multiprocessing import Process
 
 class Handle():
-    def handler(self, str):
-        self.respond(str)
+    def handler(self, content):
+        self.respond(content)
 
     def __init__(self, filename, responder):
         self.filename = filename
@@ -27,15 +27,14 @@ class DriverController():
         self.server = FifoListener('server_req',self.handler)
         responder = FifoWriter('server_resp')
         for i in dlist:
-            self.handles[i] = Handle(i, responder)
+            self.handles[i[0]] = Handle(i[0], responder)
 
 
     def handler(self, inp):
-        a,b = inp.split(';')
-        self.handles[a].write(b)
+        args = inp.split(';')
+        self.handles[args[0]].write(" ".join(args[1:]))
 
     def listen(self):
-        print('[DRIVER_CONTROLLER]Starting')
         for i in self.handles:
             p = Process(target=self.handles[i].start)
             p.start()

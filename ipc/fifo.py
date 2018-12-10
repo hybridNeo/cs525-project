@@ -17,6 +17,7 @@ class FifoListener():
 
 
     def listen(self):
+        #print ("Initiated listener for", self.filename)
 
         # print('[' + self.filename + '] In Listen')
         while True:
@@ -32,6 +33,7 @@ class FifoListener():
                 line = await reader.readline()
                 if not line: # EOF
                     break
+                #print ("In FifoListener, just read from ", self.filename, " got ", line)
                 yield line
 
         fd = open(self.filename )
@@ -50,17 +52,21 @@ class FifoWriter():
 
     def __init__(self, filename):
         self.filename = filename
+        self.writer = None
         try:
             os.mkfifo(filename)
-        except:
+        except Exception as e:
             pass
 
     def write_to_stream(self, content):
         # print(self.filename)
+
         try:
-            writer = open(self.filename, 'w')
-        except:
+            self.writer = open(self.filename, 'w')
+        except Exception as e:
+            print (e, "while opening", self.filename)
             pass
             # print("FileNotFoundException")
-        writer.write(content + '\n' )
-        writer.close()
+        self.writer.write(content + '\n' )
+        #print ("In FifoWriter, just wrote to ", self.filename, " got ", content)
+        self.writer.flush()
