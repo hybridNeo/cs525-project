@@ -121,7 +121,7 @@ if __name__ == '__main__':
             tEst,tEft = est(tGraph, computeCost, taskSchedule, i, p)
             pCost.append([tEst,tEft])
         # Whichever has the minimum est, update task schedule
-        c = zip(*pCost)[0]
+        c = list(zip(*pCost))[0]
         minIdx = min(xrange(len(c)), key=c.__getitem__)
 
         taskSchedule[i] = [i, pCost[minIdx][0],pCost[minIdx][1], minIdx]
