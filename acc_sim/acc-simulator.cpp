@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <iostream>
 
-AcceleratorSimulator::AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty){
+AcceleratorSimulator::AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty, std::ofstream& outputFifo) : outputFile(outputFifo){
     this->memorySize = memorySize;
     this->DRAMSpeed = DRAMSpeed;
     this->computeCapacity = computeCapacity;
@@ -111,9 +111,11 @@ void AcceleratorSimulator::startThread(std::shared_ptr<Task> task){
             task->inProgress = false;
             task->isComplete = true; 
             std::lock_guard<std::mutex> lock(this->resources);
+            outputFile << "Finished task " << task->taskID << std::endl;
             if (this->taskQueue.size() == 0){
                 this->doneCV.notify_all();
             }
+
             while (this->taskQueue.size() >= 1){
                 // Check if more tasks are available
                 auto newTask = this->taskQueue[0];

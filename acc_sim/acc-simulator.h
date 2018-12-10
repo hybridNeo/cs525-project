@@ -5,6 +5,8 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <fstream>
+#include <sstream>
 #include <condition_variable>
 
 
@@ -109,12 +111,13 @@ class AcceleratorSimulator{
         // Returns the amount of memory currently available in the accelerator
         double memoryAvailableWithLock();
 
+        std::ofstream& outputFile;
 
     public:
         // Constructor with initial properties
         // memorySize in Mb
         // DRAMSpeed in Mb/s
-        AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty);
+        AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty, std::ofstream& outputFile);
 
         // Add a task to the end of the queue. Returns -1 if cannot put on accelerator or task is invalid.
         // Else returns the taskID. dataSize in Mb
