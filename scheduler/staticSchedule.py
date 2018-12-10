@@ -60,7 +60,7 @@ def staticSchedule(tGraph, computeCost):
 
         # Find the min EST
         EST = list(zip(*estProcs))[1]
-        minESTIdx = min(xrange(len(EST)), key=EST.__getitem__)
+        minESTIdx = min(range(len(EST)), key=EST.__getitem__)
 
         # print("For node %d we have ESTs returned as " % node, estProcs, " and min EST is for %d proc" % minESTIdx)
 
