@@ -64,7 +64,10 @@ def getSuccessors(tGraph, node):
         Returns all the successors of the node.
     """
     # Retrive the adjacency mat
-    return tGraph.adjMatrix[node]
+    adj = tGraph.adjMatrix[node]
+
+    # All the 1s represent a successor
+    return [idx for idx,val in enumerate(adj) if val == 1]
 
 def getAvgCost(computeCost, node):
     """
@@ -85,7 +88,17 @@ if __name__ == '__main__':
         Test the algorithm.
     """
 
-    adjMatrix = [[1,2,3,4,5],[7,8],[6],[7,8],[8],[7],[9],[9],[9]]
+    adjMatrix = [[0,1,1,1,1,1,0,0,0,0],
+                 [-1,0,0,0,0,0,0,1,1,0],
+                 [-1,0,0,0,0,0,1,0,0,0],
+                 [-1,0,0,0,0,0,0,1,1,0],
+                 [-1,0,0,0,0,0,0,0,0,1,0],
+                 [-1,0,0,0,0,0,0,0,1,0,0],
+                 [0,0,-1,0,0,0,0,0,0,1],
+                 [0,-1,0,-1,0,-1,0,0,0,1],
+                 [0,-1,0,-1,-1,0,0,0,0,1],
+                 [0,0,0,0,0,0,-1,-1,-1,0]]
+    # adjMatrix = [[1,2,3,4,5],[7,8],[6],[7,8],[8],[7],[9],[9],[9]]
     entryNode = 0
     exitNode = 9
     numTasks = 10
