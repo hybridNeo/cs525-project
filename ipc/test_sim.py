@@ -3,6 +3,7 @@ from driver_sim import Driver
 from drivercontroller import DriverController, Handle
 from fifo import FifoListener, FifoWriter
 from multiprocessing import Process, Value
+import sys
 
 import time
 
@@ -99,7 +100,7 @@ class Querier():
 def util(x):
     print (x)
 
-def main():
+def test_simple():
     q = Querier()
     # lambda x: (x%2 == 0)
     m = start_drivers()
@@ -128,6 +129,16 @@ def main():
     #for i in bk:
     #    i.join()
     time.sleep(50)
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Please Enter name of the test to run")
+    else:
+        if sys.argv[1] == 'simple':
+            test_simple()
+
+
 
 if __name__ == '__main__':
     main()
