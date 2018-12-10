@@ -11,6 +11,7 @@ import numpy as np
 from est import est
 from uprank import upRank
 from est import getPredecessors
+from collections import OrderedDict
 
 INF = float("inf")
 
@@ -69,7 +70,10 @@ def staticSchedule(tGraph, computeCost):
 
         # print("Added the task schedule", taskSchedule[node])
 
-    return taskSchedule
+    # Create an ordered Dictionary
+    orderedSchedule = [(key, taskSchedule[key]) for key in scheduleOrder]
+
+    return OrderedDict(orderedSchedule)
 
 
 if __name__ == '__main__':
