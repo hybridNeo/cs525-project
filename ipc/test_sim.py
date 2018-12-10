@@ -2,7 +2,7 @@ import asyncio
 from driver_sim import Driver
 from drivercontroller import DriverController, Handle
 from fifo import FifoListener, FifoWriter
-from multiprocessing import Process
+from multiprocessing import Process, Value
 
 import time
 
@@ -35,6 +35,7 @@ class Querier():
         self.numTasksResponse = util
         self.currentTasksResponse = util
         self.doneResponse = util
+        self.taskCount = Value("i", 0)
 
 
     def handler(self, response):
@@ -55,11 +56,14 @@ class Querier():
         elif ("Done" in response):
             self.doneResponse("done")
 
-        if(self.finished_jobs == len(self.tasks)):
+        if(self.finished_jobs == self.taskCount.value):
             print("[Querier] Test Completed : " ,time.time() - self.start_time)
 
     def add_task(self, driver_name, durationMs, memoryMb, computeUnits, taskId):
-        self.tasks.append([driver_name, durationMs, memoryMb, computeUnits, taskId]);
+        self.taskCount.value += 1
+        taskInfo = [driver_name, durationMs, memoryMb, computeUnits, taskId]
+        self.writer.write_to_stream(taskInfo[0]+";addTask;"+";".join(taskInfo[1:]))
+        #self.tasks.append([driver_name, durationMs, memoryMb, computeUnits, taskId]);
 
     def contextSwitch(self, driver_name, taskID, callback):
         self.contextSwitchResponse = callback
@@ -82,7 +86,6 @@ class Querier():
         self.writer.write_to_stream(driver_name+";getCurrentTaskIDs")
 
     def returnWhenDone(self, driver_name, callback):
-        print ("returnWhenDone", callback)
         self.doneResponse = callback
         self.writer.write_to_stream(driver_name+";returnWhenDone")
 
@@ -92,16 +95,12 @@ class Querier():
         resp.start()
         #await asyncio.sleep(2)
         self.start_time = time.time()
-        for i in self.tasks:
-            self.writer.write_to_stream(i[0]+";addTask;"+";".join(i[1:]))
 
 def util(x):
     print (x)
 
 def main():
     q = Querier()
-    q.add_task("a", "1000", "10", "10", "1")
-    q.add_task("b", "1000", "10", "10", "2")
     # lambda x: (x%2 == 0)
     m = start_drivers()
 
@@ -115,14 +114,16 @@ def main():
     q_process = Process(target = q.querier)
     q_process.start()
 
-    import time
-    time.sleep(3)
+    #import time
+    #time.sleep(1)
+    q.add_task("a", "1000", "10", "10", "1")
+    q.add_task("b", "1000", "10", "10", "2")
     q.computeCapacityAvailable("a", util)
     q.memoryAvailable("b", util)
     q.getNumTasksInQueue("a", util)
     q.getCurrentTaskIDs("b", util)
-    #q.returnWhenDone("a", util)
-    #q.returnWhenDone("b", lambda : print("b finished"))
+    q.returnWhenDone("a", util)
+    q.returnWhenDone("b", lambda x : print("b finished"))
 
     #for i in bk:
     #    i.join()
