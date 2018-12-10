@@ -34,7 +34,7 @@ def rrSchedule(tGraph, computeCost):
         if(proc == []):
             proc = range(numProcs)
         proc, nextProc = getNextProc(computeCost, node, proc)
-        taskSchedule[node] = {'time': None, 'predecessors': getPredecessors(tGraph,node), 'proc': nextProc}
+        taskSchedule[node] = {'time': [0, computeCost[node][nextProc]], 'predecessors': getPredecessors(tGraph,node), 'proc': nextProc}
 
     # Create an ordered Dictionary
     orderedSchedule = [(key, taskSchedule[key]) for key in scheduleOrder]
