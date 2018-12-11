@@ -12,6 +12,7 @@ import dynamicSchedule
 from ctypes import Structure, c_double
 import time
 from multiprocessing import Process, Manager, Value
+import os
 
 
 manager = Manager()
@@ -50,21 +51,25 @@ class Querier():
         self.computeCost = computeCost
         self.tGraph = tGraph
         self.driverCount = driverCount
+        self.parentPID = os.getpid()
 
     def startedTask(self, taskID, taskDuration, taskVal):
         self.progressTasks[taskID] = taskVal
         self.updatedCostList.append((taskID, taskVal['proc'], taskDuration))
         if (scheduler == "dynamic"):
+            #print (self.progressTasks)
+            #print (self.updatedCostList)
             reorgedTasks = dynamicSchedule.dynamicSchedule(self.progressTasks, self.updatedCostList, self.computeCost, self.tGraph)
             self.appendPendingTasks(reorgedTasks)
 
     def appendPendingTasks(self, reorgedTasks):
         for key, val in reorgedTasks.items():
             if key in self.pendingTasks and val['proc'] != self.pendingTasks[key]['proc']:
+                #print ("Moved pending task", key)
                 self.pendingTasks[key] = val
                 self.pendingTasksCopy[key] = val
             elif key not in self.progressTasks and val['proc'] != self.pendingTasksCopy[key]['proc']:
-                print ("Moving task ", key)
+                #print ("Moving scheduled task ", key)
                 self.move_task(chr(ord('a') + self.pendingTasksCopy['proc']), key, chr(ord('a') + val['proc']))
 
     def setPendingTasks(self, pendingTasks):
@@ -94,7 +99,7 @@ class Querier():
             del self.pendingTasks[taskID]
 
     def handler(self, response):
-        print("[Querier] got response :" , response)
+        #print("[Querier] got response :" , response)
         if ("Finished task " in response):
             finishedTaskID = (int)(response.split()[2])
             self.finishedTasks.append(finishedTaskID)
@@ -103,6 +108,7 @@ class Querier():
             if(self.finished_jobs == self.taskCount.value):
                 self.duration.value = time.time() - self.start_time
                 print("[Querier] Test Completed : " , self.duration.value)
+                os.kill(self.parentPID, 2)
 
         elif ("taskStarted" in response):
             taskInfo = response.split(":")[1]
@@ -243,9 +249,9 @@ def test_simple():
     q.returnWhenDone("a", util)
     q.returnWhenDone("b", lambda x : print("b finished"))"""
 
-    #for i in bk:
-    #    i.join()
-    time.sleep(100)
+    for i in bk:
+        i.join()
+    #time.sleep(100)
     return q.duration.value
 
 
@@ -308,9 +314,9 @@ def test_rr():
     q.returnWhenDone("a", util)
     q.returnWhenDone("b", lambda x : print("b finished"))"""
 
-    #for i in bk:
-    #    i.join()
-    time.sleep(100)
+    for i in bk:
+        i.join()
+    #time.sleep(100)
     return q.duration.value
 
 def test_dynamic():
@@ -371,8 +377,8 @@ def test_dynamic():
     q.returnWhenDone("a", util)
     q.returnWhenDone("b", lambda x : print("b finished"))"""
 
-    #for i in bk:
-    #    i.join()
+    for i in bk:
+        i.join()
     time.sleep(100)
     return q.duration.value
 

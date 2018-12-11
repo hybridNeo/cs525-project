@@ -5,8 +5,10 @@
 #include <cstdint>
 #include <algorithm>
 #include <iostream>
+#include <time.h>
 
 AcceleratorSimulator::AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty, std::ofstream& outputFifo) : outputFile(outputFifo){
+    srand(time(0));
     this->memorySize = memorySize;
     this->DRAMSpeed = DRAMSpeed;
     this->computeCapacity = computeCapacity;
@@ -110,6 +112,9 @@ void AcceleratorSimulator::startThread(std::shared_ptr<Task> task){
             task->timeToCompletion += std::chrono::nanoseconds((int)(variance*task->timeToCompletion.count()));
         } else{
             task->timeToCompletion -= std::chrono::nanoseconds((int)(variance*task->timeToCompletion.count()));
+        }
+        if (rand() % highVarianceProbability == 1){
+            task->timeToCompletion *= (2 + ((rand()%highVariancePerf)/100));
         }
         outputFile << "taskStarted: " << task->taskID << " with cost " << (int)(task->timeToCompletion.count()/1000000) << std::endl;
         contextSwitch = consumer->contextSwitchCV.wait_for(contextSwitchLock, task->timeToCompletion);
