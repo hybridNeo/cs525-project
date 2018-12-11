@@ -118,7 +118,7 @@ class Querier():
             originalVal = self.pendingTasksCopy[taskID]
             startTime = time.time() - self.start_time
             endTime = startTime + taskDuration
-            if (taskDuration > 5):
+            if (taskDuration > 5 and scheduler == "contextSwitch"):
                 csProcess = Process(target = self.delayedContextSwitch, args=(taskID, originalVal['proc'], 5))
                 csProcess.start()
             originalVal['time'] = (startTime, endTime)
@@ -412,7 +412,7 @@ def main():
             print (test_rr())
         elif sys.argv[1] == 'dynamic':
             print (test_dynamic())
-        elif sys.argv[2] == 'contextSwitch':
+        elif sys.argv[1] == 'contextSwitch':
             print (test_dynamic())
 
 
