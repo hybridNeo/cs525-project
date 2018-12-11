@@ -32,7 +32,7 @@ def rrSchedule(tGraph, computeCost):
 
     for node in scheduleOrder:
         if(proc == []):
-            proc = range(numProcs)
+            proc = (list)(range(numProcs))
         proc, nextProc = getNextProc(computeCost, node, proc)
         taskSchedule[node] = {'time': [0, computeCost[node][nextProc]], 'predecessors': getPredecessors(tGraph,node), 'proc': nextProc}
 

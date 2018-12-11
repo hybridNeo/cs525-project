@@ -113,6 +113,8 @@ class AcceleratorSimulator{
 
         std::ofstream& outputFile;
 
+        int performanceVariance = 20;
+
     public:
         // Constructor with initial properties
         // memorySize in Mb
