@@ -118,13 +118,25 @@ class Querier():
             originalVal = self.pendingTasksCopy[taskID]
             startTime = time.time() - self.start_time
             endTime = startTime + taskDuration
+            if (taskDuration > 5):
+                csProcess = Process(target = self.delayedContextSwitch, args=(taskID, originalVal['proc'], 5))
+                csProcess.start()
             originalVal['time'] = (startTime, endTime)
             self.pendingTasksCopy[taskID] = originalVal
             self.startedTask(taskID, taskDuration, self.pendingTasksCopy[taskID])
 
         elif ("taskFlushed" in response):
-            taskInfo = response.split()
-            self.contextSwitchResponse(taskInfo[1:])
+            self.taskCount.value -= 1
+            taskInfo = response.split(":")
+            taskDetails = taskInfo[1].split()
+            timeLeft = ((int)(taskDetails[0]))/1000.0
+            computeSize = (int)(taskDetails[2])
+            memorySize = (int)(taskDetails[1])
+            taskId = (int)(taskDetails[3])
+            taskInfo = self.pendingTasksCopy[taskId]
+            self.add_task(chr(ord('a') + taskInfo['proc']), ((str)((timeLeft)*(1000))), (str)(memorySize),  (str)(computeSize), (str)(taskId))
+            # taskFlushed: 3370 50 50 0
+
         elif ("computeCapacity" in response):
             self.computeCapacityResponse((int)(response.split()[1]))
         elif ("memoryAvailable" in response):
@@ -144,6 +156,10 @@ class Querier():
         elif ("Done" in response):
             self.doneResponse("done")
 
+    def delayedContextSwitch(self, taskID, process, delay):
+        time.sleep(delay)
+        self.contextSwitch((chr(ord('a') + process)), -1, taskID)
+
     def empty_queue(self, driver_name):
         self.writer.write_to_stream(driver_name+";emptyQueue")
 
@@ -156,9 +172,8 @@ class Querier():
         self.writer.write_to_stream(taskInfo[0]+";addTask;"+";".join(taskInfo[1:]))
         #self.tasks.append([driver_name, durationMs, memoryMb, computeUnits, taskId]);
 
-    def contextSwitch(self, driver_name, taskID, callback):
-        self.contextSwitchResponse = callback
-        self.writer.write_to_stream(driver_name+";contextSwitch;"+(str)(taskID))
+    def contextSwitch(self, driver_name, taskID, targetID):
+        self.writer.write_to_stream(driver_name+";contextSwitch;"+(str)(taskID)+";"+(str)(targetID))
 
     def computeCapacityAvailable(self, driver_name, callback):
         self.computeCapacityResponse = callback
@@ -396,6 +411,8 @@ def main():
         elif sys.argv[1] == 'rr':
             print (test_rr())
         elif sys.argv[1] == 'dynamic':
+            print (test_dynamic())
+        elif sys.argv[2] == 'contextSwitch':
             print (test_dynamic())
 
 

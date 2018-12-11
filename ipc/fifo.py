@@ -33,7 +33,7 @@ class FifoListener():
                 line = await reader.readline()
                 if not line: # EOF
                     break
-                #print ("In FifoListener, just read from ", self.filename, " got ", line)
+                print ("In FifoListener, just read from ", self.filename, " got ", line)
                 yield line
 
         fd = open(self.filename )
@@ -68,5 +68,5 @@ class FifoWriter():
             pass
             # print("FileNotFoundException")
         self.writer.write(content + '\n' )
-        #print ("In FifoWriter, just wrote to ", self.filename, " got ", content)
+        print ("In FifoWriter, just wrote to ", self.filename, " got ", content)
         self.writer.flush()
