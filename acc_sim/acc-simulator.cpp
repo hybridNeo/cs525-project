@@ -103,6 +103,15 @@ void AcceleratorSimulator::startThread(std::shared_ptr<Task> task){
         // Memory transfer successful
         // Check for context switch during task processing
         task->startTime = std::chrono::system_clock::now();
+        double variance = rand() % (this->performanceVariance * 2);
+        variance = variance >= this->performanceVariance ? (variance/2.0) : (-1*variance/2.0);
+        variance /= 100.0;
+        if (variance >= 0){
+            task->timeToCompletion += std::chrono::nanoseconds((int)(variance*task->timeToCompletion.count()));
+        } else{
+            task->timeToCompletion -= std::chrono::nanoseconds((int)(variance*task->timeToCompletion.count()));
+        }
+        outputFile << "taskVariance: " << task->taskID << " will now take following milliseconds: " << (int)(task->timeToCompletion.count()/1000000) << std::endl;
         contextSwitch = consumer->contextSwitchCV.wait_for(contextSwitchLock, task->timeToCompletion);
         auto timeSpent = std::chrono::system_clock::now() - task->startTime;
         if (contextSwitch == std::cv_status::timeout){

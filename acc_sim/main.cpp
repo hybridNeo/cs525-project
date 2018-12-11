@@ -8,7 +8,7 @@
 
 int main(int argc, char * argv[]){
     if (argc != 5 && argc != 6){
-        std::cout << "Usage: " << argv[0] << "<driverName> <memorySize in MB> <computeCapacity> <DRAMSpeed in Mb/s> <contextSwitchPenalty in milliseconds (optional)> \n";
+        std::cout << "Usage: " << argv[0] << " <driverName> <memorySize in MB> <computeCapacity> <DRAMSpeed in Mb/s> <contextSwitchPenalty in milliseconds (optional)> \n";
         return 0;
     } 
     std::string fileInput = "req_" + (std::string(argv[1]));
@@ -20,17 +20,14 @@ int main(int argc, char * argv[]){
     if (argc == 6){
         int contextSwitchPenalty = atoi(argv[5]);
     } 
-    std::cout << "Created simulator" << std::endl;
     std::ofstream outputFifo(fileOutput);
     std::ifstream inputFifo(fileInput);
     AcceleratorSimulator acc(memorySize, computeCapacity, DRAMSpeed, std::chrono::milliseconds(contextSwitchPenalty), outputFifo);
     std::string line;
     if (inputFifo.is_open())
     {
-        std::cout << "Input fifo is open" << std::endl;
         while ( getline (inputFifo,line) )
         {
-            std::cout << "Got a line: " << line << std::endl;
             std::istringstream iss(line);
             std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                     std::istream_iterator<std::string>());
@@ -75,7 +72,6 @@ int main(int argc, char * argv[]){
                 outputFifo << "Invalid input " << std::endl;
             }
         }
-        std::cout << "Input fifo has been closed" << std::endl;
         acc.returnWhenDone();
         outputFifo << "Done" << std::endl;
         inputFifo.close();
