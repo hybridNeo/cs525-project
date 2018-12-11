@@ -26,7 +26,7 @@ class taskGraph():
         self.exitNode = exitNode
         self.numTasks = numTasks
 
-def staticSchedule(tGraph, computeCost):
+def staticSchedule(tGraph, computeCost, offset=0):
     """
         Main function.
     """
@@ -71,7 +71,7 @@ def staticSchedule(tGraph, computeCost):
         # print("Added the task schedule", taskSchedule[node])
 
     # Create an ordered Dictionary
-    orderedSchedule = [(key, taskSchedule[key]) for key in scheduleOrder]
+    orderedSchedule = [(key+offset, taskSchedule[key]) for key in scheduleOrder]
 
     return OrderedDict(orderedSchedule)
 

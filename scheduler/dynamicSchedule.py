@@ -27,7 +27,7 @@ class taskGraph():
         self.exitNode = exitNode
         self.numTasks = numTasks
 
-def dynamicSchedule(taskScheduled, updatedCost, computeCost, tGraph):
+def dynamicSchedule(taskScheduled, updatedCost, computeCost, tGraph, offset=0):
 
     # Update compute costs
     computeCost= updateCost(updatedCost, computeCost)
@@ -69,7 +69,7 @@ def dynamicSchedule(taskScheduled, updatedCost, computeCost, tGraph):
         # print("Added the task schedule", taskSchedule[node])
 
     # Create an ordered Dictionary
-    orderedSchedule = [(key, taskSchedule[key]) for key in scheduleOrder]
+    orderedSchedule = [(key+offset, taskSchedule[key]) for key in scheduleOrder]
 
     return OrderedDict(orderedSchedule)
 
@@ -119,6 +119,6 @@ if __name__ == '__main__':
                      1: {'proc': 0, 'predecessors': [0], 'time': (15, 32)}}
     updatedCost = [(0,2,15),(1,0,17)]
 
-    newSchedule = dynamicSchedule(taskScheduled, updatedCost, computeCost)
+    newSchedule = dynamicSchedule(taskScheduled, updatedCost, computeCost, tGraph)
 
     print("New Schedule", newSchedule)
