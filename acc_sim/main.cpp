@@ -67,6 +67,17 @@ int main(int argc, char * argv[]){
                 acc.returnWhenDone(); 
                 outputFifo << "Done" << std::endl;
                 return 0;
+            } 
+            else if (tokens[0] == "emptyQueue"){
+                acc.emptyQueue(); 
+            }
+            else if (tokens[0] == "moveTask"){
+                int taskID = std::stoi(tokens[1]);
+                std::string destination = tokens[2]; 
+                bool moved = acc.moveTask(taskID);
+                if (moved == true){
+                    outputFifo << "movedTask:" << taskID << " to " << destination << std::endl;
+                }
             }
             else{
                 outputFifo << "Invalid input " << std::endl;

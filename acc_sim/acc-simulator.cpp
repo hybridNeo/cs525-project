@@ -111,7 +111,7 @@ void AcceleratorSimulator::startThread(std::shared_ptr<Task> task){
         } else{
             task->timeToCompletion -= std::chrono::nanoseconds((int)(variance*task->timeToCompletion.count()));
         }
-        outputFile << "taskVariance: " << task->taskID << " will now take following milliseconds: " << (int)(task->timeToCompletion.count()/1000000) << std::endl;
+        outputFile << "taskStarted: " << task->taskID << " with cost " << (int)(task->timeToCompletion.count()/1000000) << std::endl;
         contextSwitch = consumer->contextSwitchCV.wait_for(contextSwitchLock, task->timeToCompletion);
         auto timeSpent = std::chrono::system_clock::now() - task->startTime;
         if (contextSwitch == std::cv_status::timeout){
@@ -228,6 +228,7 @@ int AcceleratorSimulator::contextSwitch(int taskID, std::vector<std::shared_ptr<
     }
     return -1;
 }
+
 /*
    if (task->inProgress == false && task->isComplete == false){
    int currTask = getCurrentTaskID();
@@ -281,6 +282,22 @@ timeLeft += task->memoryOverhead + task->timeToCompletion;
 }
 return timeLeft;
 }*/
+
+void AcceleratorSimulator::emptyQueue(){
+    std::lock_guard<std::mutex> lock(this->resources);
+    this->taskQueue.clear();
+}
+
+bool AcceleratorSimulator::moveTask(int taskID){
+    std::lock_guard<std::mutex> lock(this->resources);
+    for (auto it = this->taskQueue.begin() ; it != this->taskQueue.end(); ++it){
+        if ((*it)->taskID == taskID){
+            it = this->taskQueue.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
 
 int AcceleratorSimulator::getNumTasksInQueue(){
     std::lock_guard<std::mutex> lock(this->resources);

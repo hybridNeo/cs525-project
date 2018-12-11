@@ -2,4 +2,5 @@
 *.o
 *.pyc
 __pycache__
-acc_sim/simulator
+simulator
+*out

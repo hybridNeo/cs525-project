@@ -143,4 +143,10 @@ class AcceleratorSimulator{
 
         // Waits for all tasks in queue to complete and then returns
         void returnWhenDone();
+
+        // Empty out all the pending tasks
+        void emptyQueue();
+
+        // Move the task out if its still in task queue
+        bool moveTask(int taskID);
 };
