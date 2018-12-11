@@ -102,7 +102,7 @@ class Querier():
 
 
     def cleanup(self):
-        os.system("rm recv_*")
+        os.system("rm resp_*")
         os.system("rm req_*")
         os.system("rm server_req server_resp")
 
@@ -239,6 +239,7 @@ def test_simple():
     computeCost = [[14,16,9],[13,19,18],[11,13,19],[13,8,17],[12,13,10],
                         [13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16]]
 
+    # computeCost = [[int(i/6) for i in j] for j in computeCost]
     taskSchedule = staticSchedule.staticSchedule(tGraph, computeCost)
 
     drivers = [
