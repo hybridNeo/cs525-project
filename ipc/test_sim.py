@@ -3,6 +3,8 @@ from driver_sim import Driver
 from drivercontroller import DriverController, Handle
 from fifo import FifoListener, FifoWriter
 from multiprocessing import Process, Value
+import subprocess
+import signal
 
 import sys
 sys.path.insert(0,'../scheduler/')
@@ -98,6 +100,12 @@ class Querier():
         for taskID in tasksAdded:
             del self.pendingTasks[taskID]
 
+
+    def cleanup(self):
+        os.system("rm recv_*")
+        os.system("rm req_*")
+        os.system("rm server_req server_resp")
+
     def handler(self, response):
         #print("[Querier] got response :" , response)
         if ("Finished task " in response):
@@ -108,7 +116,11 @@ class Querier():
             if(self.finished_jobs == self.taskCount.value):
                 self.duration.value = time.time() - self.start_time
                 print("[Querier] Test Completed : " , self.duration.value)
-                os.kill(self.parentPID, 2)
+                # process = subprocess.Popen(..)
+                # process.send_signal(signal.SIGINT)
+                time.sleep(1)
+                self.cleanup()
+                os.kill(self.parentPID, signal.SIGKILL)
 
         elif ("taskStarted" in response):
             taskInfo = response.split(":")[1]
