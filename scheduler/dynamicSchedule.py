@@ -27,7 +27,7 @@ class taskGraph():
         self.exitNode = exitNode
         self.numTasks = numTasks
 
-def dynamicSchedule(taskScheduled, updatedCost, computeCost):
+def dynamicSchedule(taskScheduled, updatedCost, computeCost, tGraph):
 
     # Update compute costs
     computeCost= updateCost(updatedCost, computeCost)
