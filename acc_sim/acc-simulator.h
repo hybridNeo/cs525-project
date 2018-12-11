@@ -113,7 +113,9 @@ class AcceleratorSimulator{
 
         std::ofstream& outputFile;
 
-        int performanceVariance = 100;
+        int performanceVariance = 20;
+        int highVarianceProbability = 4;
+        int highVariancePerf = 100;
 
     public:
         // Constructor with initial properties
