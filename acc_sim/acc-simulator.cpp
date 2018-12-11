@@ -5,8 +5,10 @@
 #include <cstdint>
 #include <algorithm>
 #include <iostream>
+#include <time.h>
 
 AcceleratorSimulator::AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty, std::ofstream& outputFifo) : outputFile(outputFifo){
+    srand(time(0));
     this->memorySize = memorySize;
     this->DRAMSpeed = DRAMSpeed;
     this->computeCapacity = computeCapacity;

@@ -55,16 +55,19 @@ class Querier():
         self.progressTasks[taskID] = taskVal
         self.updatedCostList.append((taskID, taskVal['proc'], taskDuration))
         if (scheduler == "dynamic"):
+            print (self.progressTasks)
+            print (self.updatedCostList)
             reorgedTasks = dynamicSchedule.dynamicSchedule(self.progressTasks, self.updatedCostList, self.computeCost, self.tGraph)
             self.appendPendingTasks(reorgedTasks)
 
     def appendPendingTasks(self, reorgedTasks):
         for key, val in reorgedTasks.items():
             if key in self.pendingTasks and val['proc'] != self.pendingTasks[key]['proc']:
+                print ("Moved pending task", key)
                 self.pendingTasks[key] = val
                 self.pendingTasksCopy[key] = val
             elif key not in self.progressTasks and val['proc'] != self.pendingTasksCopy[key]['proc']:
-                print ("Moving task ", key)
+                print ("Moving scheduled task ", key)
                 self.move_task(chr(ord('a') + self.pendingTasksCopy['proc']), key, chr(ord('a') + val['proc']))
 
     def setPendingTasks(self, pendingTasks):
