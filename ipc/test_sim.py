@@ -487,7 +487,7 @@ def main():
             if(sys.argv[2] == 'fft'):
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = fft_graph()
             else:
-                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, 0.3)
+                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, 1)
 
         if sys.argv[1] == 'simple':
             print (test_simple(adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost))
