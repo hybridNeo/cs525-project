@@ -35,11 +35,11 @@ def start_drivers(drivers):
     return res
 
 class Querier():
-    def __init__(self, computeCost = [], tGraph = None, driverCount = 0, dagCount = 1, singleDagNodeCount = 0):
+    def __init__(self, computeCost = [], tGraph = None, driverCount = 0, dagCount = 1, singleDagNodeCount = -1):
         self.writer = FifoWriter('server_req')
         self.tasks = []
         self.finished_jobs = 0
-        self.start_time = time.time()
+        self.start_time = 0
         self.contextSwitchResponse = util
         self.computeCapacityResponse = util
         self.memoryResponse = util
@@ -59,6 +59,7 @@ class Querier():
         self.parentPID = os.getpid()
         self.dagCount = dagCount
         self.singleDagNodeCount = singleDagNodeCount
+        self.start_time = time.time()
         self.dagPending = manager.list([0 for i in range(self.dagCount)])
 
     def startedTask(self, taskID, taskDuration, taskVal):
@@ -72,10 +73,25 @@ class Querier():
         if (found == False):
             self.updatedCostList.append((taskID, taskVal['proc'], taskDuration))
         if (scheduler == "dynamic" or scheduler == "contextSwitchEnabled"):
-            print (self.progressTasks)
-            print (self.updatedCostList)
-            reorgedTasks = dynamicSchedule.dynamicSchedule(self.progressTasks, self.updatedCostList, self.computeCost, self.tGraph)
-            self.appendPendingTasks(reorgedTasks)
+            if (scheduler == "contextSwitchEnabled"):
+                startRange = taskID - (taskID%self.singleDagNodeCount);
+                endRange = startRange + self.singleDagNodeCount;
+                localProgressTasks = {}
+                localCostList = []
+                for key, val in self.progressTasks.items():
+                    if (key >= startRange and key < endRange):
+                        localProgressTasks[key] = val
+                for item in self.updatedCostList:
+                    key = item[0]
+                    if (key >= startRange and key < endRange):
+                        localCostList.append(item)
+
+                reorgedTasks = dynamicSchedule.dynamicSchedule(localProgressTasks, localCostList, self.computeCost, self.tGraph, startRange)
+                self.appendPendingTasks(reorgedTasks)
+            else:
+                reorgedTasks = dynamicSchedule.dynamicSchedule(self.progressTasks, self.updatedCostList, self.computeCost, self.tGraph)
+                self.appendPendingTasks(reorgedTasks)
+
 
     def appendPendingTasks(self, reorgedTasks):
         for key, val in reorgedTasks.items():
@@ -85,7 +101,7 @@ class Querier():
                 self.pendingTasksCopy[key] = val
             elif key not in self.progressTasks and val['proc'] != self.pendingTasksCopy[key]['proc']:
                 #print ("Moving scheduled task ", key)
-                self.move_task(chr(ord('a') + self.pendingTasksCopy['proc']), key, chr(ord('a') + val['proc']))
+                self.move_task(chr(ord('a') + self.pendingTasksCopy[key]['proc']), key, chr(ord('a') + val['proc']))
 
     def setPendingTasks(self, pendingTasks):
         self.pendingTasks.clear()
@@ -93,9 +109,9 @@ class Querier():
         for key, val in pendingTasks.items():
             self.pendingTasks[key] = val
             self.pendingTasksCopy[key] = val
-            print ("parentDag is", val['parentDAG'])
-            print ("Length is ", len(self.dagPending))
-            self.dagPending[val['parentDAG']] += 1
+            if ("contextSwitch" in scheduler):
+                parentDag = (int)(key/self.singleDagNodeCount);
+                self.dagPending[parentDag] += 1
         self.addTasks()
 
     def addTasks(self):
@@ -110,7 +126,7 @@ class Querier():
             if (len(predecessors) == 0):
                 startTime = taskInfo['time'][0]
                 endTime = taskInfo['time'][1]
-                self.add_task(chr(ord('a') + taskInfo['proc']), ((str)((endTime - startTime)*(1000))), "100", "50", (str)(taskID))
+                self.add_task(chr(ord('a') + taskInfo['proc']), ((str)((endTime - startTime)*(100))), "100", "50", (str)(taskID))
                 tasksAdded.append(taskID)
             self.pendingTasksCopy[taskID] = taskInfo
 
@@ -119,32 +135,31 @@ class Querier():
 
 
     def cleanup(self):
-        os.system("rm -f resp_*")
-        os.system("rm -f req_*")
-        os.system("rm -f server_req server_resp")
+        os.system("make clean")
 
     def handler(self, response):
-        print("[Querier] got response :" , response)
+        #print("[Querier] got response :" , response)
         if ("Finished task " in response):
             finishedTaskID = (int)(response.split()[2])
             self.finishedTasks.append(finishedTaskID)
             self.finished_jobs += 1
             self.addTasks()
-            parentDag = self.pendingTasksCopy[finishedTaskID]['parentDAG']
-            self.dagPending[parentDag] -= 1
-            if (self.dagPending[parentDag] == 0):
-                for i in self.dagPending:
-                    if i != 0:
-                        return
-                dagDuration = time.time() - self.start_time
-                print ("Dag ", parentDag, " took ", dagDuration, "seconds.")
+            if ("contextSwitch" in scheduler):
+                parentDag = (int)(finishedTaskID/self.singleDagNodeCount);
+                self.dagPending[parentDag] -= 1
+                if (self.dagPending[parentDag] == 0):
+                    for i in self.dagPending:
+                        if i != 0:
+                            return
+                    dagDuration = time.time() - self.start_time
+                    print("[Querier] DAG", parentDag, "Completed : " , dagDuration)
 
             if(self.finished_jobs == self.taskCount.value):
-                self.duration.value = time.time() - self.start_time
-                print("[Querier] Test Completed : " , self.duration.value)
+                duration = time.time() - self.start_time
+                print("[Querier] Test Completed : " , duration)
                 # process = subprocess.Popen(..)
                 # process.send_signal(signal.SIGINT)
-                time.sleep(1)
+                time.sleep(2)
                 self.cleanup()
                 os.kill(self.parentPID, signal.SIGKILL)
 
@@ -152,7 +167,7 @@ class Querier():
             taskInfo = response.split(":")[1]
             details = taskInfo.split()
             taskID = (int)(details[0])
-            taskDuration = ((int)(details[3]))/1000.0
+            taskDuration = ((int)(details[3]))/100.0
             originalVal = self.pendingTasksCopy[taskID]
             startTime = time.time() - self.start_time
             endTime = startTime + taskDuration
@@ -169,15 +184,16 @@ class Querier():
 
         elif ("taskFlushed" in response):
             self.taskCount.value -= 1
+            print ("Decrement taskCount", self.taskCount.value)
             taskInfo = response.split(":")
             taskDetails = taskInfo[1].split()
-            timeLeft = ((int)(taskDetails[0]))/1000.0
+            timeLeft = ((int)(taskDetails[0]))/100.0
             computeSize = (int)(taskDetails[2])
             memorySize = (int)(taskDetails[1])
             taskId = (int)(taskDetails[3])
             taskInfo = self.pendingTasksCopy[taskId]
-            self.pendingTasks[taskId] = self.pendingTasksCopy
-            self.add_task(chr(ord('a') + taskInfo['proc']), ((str)((timeLeft)*(1000))), (str)(memorySize),  (str)(computeSize), (str)(taskId))
+            #self.pendingTasks[taskId] = self.pendingTasksCopy
+            self.add_task(chr(ord('a') + taskInfo['proc']), ((str)((timeLeft)*(100))), (str)(memorySize),  (str)(computeSize), (str)(taskId))
             # taskFlushed: 3370 50 50 0
 
         elif ("computeCapacity" in response):
@@ -189,12 +205,14 @@ class Querier():
         elif ("currentIDs" in response):
             self.currentTasksResponse(([(int)(i) for i in response.split()[1:]]))
         elif ("movedTask" in response):
+            self.taskCount.value -= 1
+            print ("Decrement taskCount", self.taskCount.value)
             taskInfo = response.split(":")[1]
             details = taskInfo.split()
             taskID = (int)(details[0])
             destination = (details[2])
             originalVal = self.pendingTasksCopy[taskID]
-            originalVal['proc'] = destination
+            originalVal['proc'] = ord(destination) - ord('a')
             self.pendingTasks[taskID] = originalVal
         elif ("Done" in response):
             self.doneResponse("done")
@@ -243,7 +261,6 @@ class Querier():
         resp = Process(target = r.listen)
         resp.start()
         #await asyncio.sleep(2)
-        self.start_time = time.time()
 
 def util(x):
     print (x)
@@ -255,6 +272,7 @@ def test_simple(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost)
 
     # computeCost = [[int(i/6) for i in j] for j in computeCost]
     taskSchedule = staticSchedule.staticSchedule(tGraph, computeCost)
+    print (taskSchedule)
 
     drivers = [
         # (Driver name, memory Size, compute Capacity, Memory transfer speed, contextSwitchPenalty)
@@ -302,6 +320,7 @@ def test_rr(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost):
     tGraph = rrSchedule.taskGraph(adjMatrix, entryNode, exitNode, numTasks)
 
     taskSchedule = rrSchedule.rrSchedule(tGraph, computeCost)
+    print (taskSchedule)
 
     drivers = [
         # (Driver name, memory Size, compute Capacity, Memory transfer speed, contextSwitchPenalty)
@@ -394,11 +413,7 @@ def test_contextSwitch(adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCos
     tGraph = staticSchedule.taskGraph(adjMatrix, entryNode, exitNode, numTasks)
 
     taskSchedule = staticSchedule.staticSchedule(tGraph, computeCost)
-    for key, val in taskSchedule.items():
-        taskSchedule[key]['parentDAG'] = 0
     taskSchedule2 = staticSchedule.staticSchedule(tGraph, computeCost, len(taskSchedule))
-    for key, val in taskSchedule2.items():
-        taskSchedule2[key]['parentDAG'] = 1
 
     taskSchedule.update(taskSchedule2)
 
@@ -474,7 +489,6 @@ def main():
             else:
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, 0.3)
 
-        print("INFO",entryNode,exitNode,numTasks,numProcs,len(computeCost))
         if sys.argv[1] == 'simple':
             print (test_simple(adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost))
         elif sys.argv[1] == 'rr':
