@@ -486,6 +486,8 @@ def main():
         else:
             if(sys.argv[2] == 'fft'):
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = fft_graph()
+            elif(sys.argv[2] == 'mpeg'):
+                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = mpeg_graph()
             else:
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, 1)
 
