@@ -8,7 +8,7 @@ import signal
 
 import sys
 sys.path.insert(0,'../utils/')
-from graph_maker import generate_random_dag, fft_graph, mpeg_graph
+from graph_maker import generate_random_dag, fft_graph, mpeg_graph, gauss_graph
 
 sys.path.insert(0,'../scheduler/')
 import staticSchedule
