@@ -63,7 +63,7 @@ class Querier():
         self.dagPending = manager.list([0 for i in range(self.dagCount)])
 
     def startedTask(self, taskID, taskDuration, taskVal):
-        print (taskID, taskDuration)
+        print ("Task", taskID, "started execution.")
         self.progressTasks[taskID] = taskVal
         found = False
         for index in range(len(self.updatedCostList)):
@@ -95,16 +95,22 @@ class Querier():
 
 
     def appendPendingTasks(self, reorgedTasks):
+        change = False
         for key, val in reorgedTasks.items():
             if key in self.pendingTasks and val['proc'] != self.pendingTasks[key]['proc']:
+                change = True
                 #print ("Moved pending task", key)
                 self.pendingTasks[key] = val
                 self.pendingTasksCopy[key] = val
             elif key not in self.progressTasks and val['proc'] != self.pendingTasksCopy[key]['proc']:
                 #print ("Moving scheduled task ", key)
+                change = True
                 self.move_task(chr(ord('a') + self.pendingTasksCopy[key]['proc']), key, chr(ord('a') + val['proc']))
+        if (change == True):
+            print ("Updated schedule dynamically")
 
     def setPendingTasks(self, pendingTasks):
+        print ("Loading the tasks into driver queues")
         self.pendingTasks.clear()
         self.pendingTasksCopy.clear()
         for key, val in pendingTasks.items():
@@ -141,6 +147,7 @@ class Querier():
     def handler(self, response):
         #print("[Querier] got response :" , response)
         if ("Finished task " in response):
+            print (response)
             finishedTaskID = (int)(response.split()[2])
             self.finishedTasks.append(finishedTaskID)
             self.finished_jobs += 1
@@ -184,8 +191,8 @@ class Querier():
             self.startedTask(taskID, taskDuration, self.pendingTasksCopy[taskID])
 
         elif ("taskFlushed" in response):
+            print ("Context switch sent a task back to driver controller")
             self.taskCount.value -= 1
-            print ("Decrement taskCount", self.taskCount.value)
             taskInfo = response.split(":")
             taskDetails = taskInfo[1].split()
             timeLeft = ((int)(taskDetails[0]))/100.0
@@ -206,8 +213,8 @@ class Querier():
         elif ("currentIDs" in response):
             self.currentTasksResponse(([(int)(i) for i in response.split()[1:]]))
         elif ("movedTask" in response):
+            print ("Moving task to different accelerator")
             self.taskCount.value -= 1
-            print ("Decrement taskCount", self.taskCount.value)
             taskInfo = response.split(":")[1]
             details = taskInfo.split()
             taskID = (int)(details[0])
@@ -273,7 +280,7 @@ def test_simple(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost)
 
     # computeCost = [[int(i/6) for i in j] for j in computeCost]
     taskSchedule = staticSchedule.staticSchedule(tGraph, computeCost)
-    print (taskSchedule)
+    print ("Obtained schedule.")
 
     drivers = [
         # (Driver name, memory Size, compute Capacity, Memory transfer speed, contextSwitchPenalty)
@@ -284,6 +291,7 @@ def test_simple(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost)
 
     q = Querier()
     # lambda x: (x%2 == 0)
+    print ("Starting the simulators")
     m = start_drivers(drivers)
 
     dc = DriverController(drivers)
@@ -321,7 +329,7 @@ def test_rr(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost):
     tGraph = rrSchedule.taskGraph(adjMatrix, entryNode, exitNode, numTasks)
 
     taskSchedule = rrSchedule.rrSchedule(tGraph, computeCost)
-    print (taskSchedule)
+    print ("Obtained schedule.")
 
     drivers = [
         # (Driver name, memory Size, compute Capacity, Memory transfer speed, contextSwitchPenalty)
@@ -332,6 +340,7 @@ def test_rr(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost):
 
     q = Querier()
     # lambda x: (x%2 == 0)
+    print ("Starting the simulators")
     m = start_drivers(drivers)
 
     dc = DriverController(drivers)
@@ -368,6 +377,7 @@ def test_dynamic(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost
     tGraph = staticSchedule.taskGraph(adjMatrix, entryNode, exitNode, numTasks)
 
     taskSchedule = staticSchedule.staticSchedule(tGraph, computeCost)
+    print ("Obtained schedule.")
 
     drivers = [
         # (Driver name, memory Size, compute Capacity, Memory transfer speed, contextSwitchPenalty)
@@ -378,6 +388,7 @@ def test_dynamic(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost
 
     q = Querier(computeCost, tGraph, len(drivers))
     # lambda x: (x%2 == 0)
+    print ("Starting the simulators")
     m = start_drivers(drivers)
 
     dc = DriverController(drivers)
@@ -417,6 +428,7 @@ def test_contextSwitch(adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCos
     taskSchedule2 = staticSchedule.staticSchedule(tGraph, computeCost, len(taskSchedule))
 
     taskSchedule.update(taskSchedule2)
+    print ("Obtained schedule.")
 
     drivers = [
         # (Driver name, memory Size, compute Capacity, Memory transfer speed, contextSwitchPenalty)
@@ -429,6 +441,7 @@ def test_contextSwitch(adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCos
     singleDagNodeCount = len(taskSchedule)/2
     q = Querier(computeCost, tGraph, len(drivers), 2, singleDagNodeCount)
     # lambda x: (x%2 == 0)
+    print ("Starting the simulators")
     m = start_drivers(drivers)
 
     dc = DriverController(drivers)
@@ -494,6 +507,7 @@ def main():
             else:
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, 1)
 
+        print ("Generating the schedule")
         if sys.argv[1] == 'simple':
             print (test_simple(adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost))
         elif sys.argv[1] == 'rr':
