@@ -512,7 +512,7 @@ def main():
             elif(sys.argv[2] == 'mp3'):
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = mp3_graph()
             else:
-                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, int(sys.argv[3]))
+                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, float(sys.argv[3]))
 
         print ("Generating the schedule")
         if sys.argv[1] == 'simple':
