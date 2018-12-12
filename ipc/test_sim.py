@@ -32,7 +32,7 @@ def start_drivers(drivers):
     return res
 
 class Querier():
-    def __init__(self, computeCost = [], tGraph = None, driverCount = 0):
+    def __init__(self, computeCost = [], tGraph = None, driverCount = 0, dagCount = 1, singleDagNodeCount = 0):
         self.writer = FifoWriter('server_req')
         self.tasks = []
         self.finished_jobs = 0
@@ -54,13 +54,23 @@ class Querier():
         self.tGraph = tGraph
         self.driverCount = driverCount
         self.parentPID = os.getpid()
+        self.dagCount = dagCount
+        self.singleDagNodeCount = singleDagNodeCount
+        self.dagPending = manager.list([0 for i in range(self.dagCount)])
 
     def startedTask(self, taskID, taskDuration, taskVal):
         self.progressTasks[taskID] = taskVal
-        self.updatedCostList.append((taskID, taskVal['proc'], taskDuration))
-        if (scheduler == "dynamic"):
-            #print (self.progressTasks)
-            #print (self.updatedCostList)
+        found = False
+        for index in range(len(self.updatedCostList)):
+            if (self.updatedCostList[index][0] == taskID):
+                self.updatedCostList[index] = (taskID, taskVal['proc'], taskDuration)
+                found = True
+                break
+        if (found == False):
+            self.updatedCostList.append((taskID, taskVal['proc'], taskDuration))
+        if (scheduler == "dynamic" or scheduler == "contextSwitchEnabled"):
+            print (self.progressTasks)
+            print (self.updatedCostList)
             reorgedTasks = dynamicSchedule.dynamicSchedule(self.progressTasks, self.updatedCostList, self.computeCost, self.tGraph)
             self.appendPendingTasks(reorgedTasks)
 
@@ -80,6 +90,9 @@ class Querier():
         for key, val in pendingTasks.items():
             self.pendingTasks[key] = val
             self.pendingTasksCopy[key] = val
+            print ("parentDag is", val['parentDAG'])
+            print ("Length is ", len(self.dagPending))
+            self.dagPending[val['parentDAG']] += 1
         self.addTasks()
 
     def addTasks(self):
@@ -96,23 +109,33 @@ class Querier():
                 endTime = taskInfo['time'][1]
                 self.add_task(chr(ord('a') + taskInfo['proc']), ((str)((endTime - startTime)*(1000))), "100", "50", (str)(taskID))
                 tasksAdded.append(taskID)
+            self.pendingTasksCopy[taskID] = taskInfo
 
         for taskID in tasksAdded:
             del self.pendingTasks[taskID]
 
 
     def cleanup(self):
-        os.system("rm recv_*")
-        os.system("rm req_*")
-        os.system("rm server_req server_resp")
+        os.system("rm -f recv_*")
+        os.system("rm -f req_*")
+        os.system("rm -f server_req server_resp")
 
     def handler(self, response):
-        #print("[Querier] got response :" , response)
+        print("[Querier] got response :" , response)
         if ("Finished task " in response):
             finishedTaskID = (int)(response.split()[2])
             self.finishedTasks.append(finishedTaskID)
             self.finished_jobs += 1
             self.addTasks()
+            parentDag = self.pendingTasksCopy[finishedTaskID]['parentDAG']
+            self.dagPending[parentDag] -= 1
+            if (self.dagPending[parentDag] == 0):
+                for i in self.dagPending:
+                    if i != 0:
+                        return
+                dagDuration = time.time() - self.start_time
+                print ("Dag ", parentDag, " took ", dagDuration, "seconds.")
+
             if(self.finished_jobs == self.taskCount.value):
                 self.duration.value = time.time() - self.start_time
                 print("[Querier] Test Completed : " , self.duration.value)
@@ -130,9 +153,13 @@ class Querier():
             originalVal = self.pendingTasksCopy[taskID]
             startTime = time.time() - self.start_time
             endTime = startTime + taskDuration
-            if (taskDuration > 5 and scheduler == "contextSwitch"):
-                csProcess = Process(target = self.delayedContextSwitch, args=(taskID, originalVal['proc'], 5))
-                csProcess.start()
+            if (taskDuration > 10 and scheduler == "contextSwitchEnabled"):
+                if (taskID < self.singleDagNodeCount):
+                    csProcess = Process(target = self.delayedContextSwitch, args=(taskID, originalVal['proc'], 10, taskID+self.singleDagNodeCount))
+                    csProcess.start()
+                else:
+                    csProcess = Process(target = self.delayedContextSwitch, args=(taskID, originalVal['proc'], 10, taskID-self.singleDagNodeCount))
+                    csProcess.start()
             originalVal['time'] = (startTime, endTime)
             self.pendingTasksCopy[taskID] = originalVal
             self.startedTask(taskID, taskDuration, self.pendingTasksCopy[taskID])
@@ -146,6 +173,7 @@ class Querier():
             memorySize = (int)(taskDetails[1])
             taskId = (int)(taskDetails[3])
             taskInfo = self.pendingTasksCopy[taskId]
+            self.pendingTasks[taskId] = self.pendingTasksCopy
             self.add_task(chr(ord('a') + taskInfo['proc']), ((str)((timeLeft)*(1000))), (str)(memorySize),  (str)(computeSize), (str)(taskId))
             # taskFlushed: 3370 50 50 0
 
@@ -168,9 +196,9 @@ class Querier():
         elif ("Done" in response):
             self.doneResponse("done")
 
-    def delayedContextSwitch(self, taskID, process, delay):
+    def delayedContextSwitch(self, taskID, process, delay, targetID):
         time.sleep(delay)
-        self.contextSwitch((chr(ord('a') + process)), -1, taskID)
+        self.contextSwitch((chr(ord('a') + process)), targetID, taskID)
 
     def empty_queue(self, driver_name):
         self.writer.write_to_stream(driver_name+";emptyQueue")
@@ -409,6 +437,77 @@ def test_dynamic():
     time.sleep(100)
     return q.duration.value
 
+def test_contextSwitch():
+    adjMatrix = [[0,1,1,1,1,1,0,0,0,0],
+                 [-1,0,0,0,0,0,0,1,1,0],
+                 [-1,0,0,0,0,0,1,0,0,0],
+                 [-1,0,0,0,0,0,0,1,1,0],
+                 [-1,0,0,0,0,0,0,0,1,0],
+                 [-1,0,0,0,0,0,0,1,0,0],
+                 [0,0,-1,0,0,0,0,0,0,1],
+                 [0,-1,0,-1,0,-1,0,0,0,1],
+                 [0,-1,0,-1,-1,0,0,0,0,1],
+                 [0,0,0,0,0,0,-1,-1,-1,0]]
+    entryNode = 0
+    exitNode = 9
+    numTasks = 10
+    numProcs = 3
+
+    tGraph = staticSchedule.taskGraph(adjMatrix, entryNode, exitNode, numTasks)
+
+    computeCost = [[14,16,9],[13,19,18],[11,13,19],[13,8,17],[12,13,10],
+                        [13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16]]
+
+    taskSchedule = staticSchedule.staticSchedule(tGraph, computeCost)
+    for key, val in taskSchedule.items():
+        taskSchedule[key]['parentDAG'] = 0
+    taskSchedule2 = staticSchedule.staticSchedule(tGraph, computeCost, len(taskSchedule))
+    for key, val in taskSchedule2.items():
+        taskSchedule2[key]['parentDAG'] = 1
+
+    taskSchedule.update(taskSchedule2)
+
+    drivers = [
+        # (Driver name, memory Size, compute Capacity, Memory transfer speed, contextSwitchPenalty)
+        ]
+
+    for i in range(numProcs):
+        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0))
+
+    dagCount = 2
+    singleDagNodeCount = len(taskSchedule)/2
+    q = Querier(computeCost, tGraph, len(drivers), 2, singleDagNodeCount)
+    # lambda x: (x%2 == 0)
+    m = start_drivers(drivers)
+
+    dc = DriverController(drivers)
+    bk = [Process(target = dc.listen)]
+
+    for i in m:
+        bk.append(i)
+    for i in bk:
+        i.start()
+    #q_process = Process(target = q.querier)
+    #q_process.start()
+    q.querier()
+    q.setPendingTasks(taskSchedule)
+
+
+    #import time
+    #time.sleep(1)
+    """q.add_task("a", "1000", "10", "10", "1")
+    q.add_task("b", "1000", "10", "10", "2")
+    q.computeCapacityAvailable("a", util)
+    q.memoryAvailable("b", util)
+    q.getNumTasksInQueue("a", util)
+    q.getCurrentTaskIDs("b", util)
+    q.returnWhenDone("a", util)
+    q.returnWhenDone("b", lambda x : print("b finished"))"""
+
+    for i in bk:
+        i.join()
+    time.sleep(100)
+    return q.duration.value
 
 
 def main():
@@ -424,8 +523,10 @@ def main():
             print (test_rr())
         elif sys.argv[1] == 'dynamic':
             print (test_dynamic())
-        elif sys.argv[1] == 'contextSwitch':
-            print (test_dynamic())
+        elif sys.argv[1] == 'contextSwitchEnabled':
+            print (test_contextSwitch())
+        elif sys.argv[1] == 'contextSwitchDisabled':
+            print (test_contextSwitch())
 
 
 

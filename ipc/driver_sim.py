@@ -20,8 +20,7 @@ class Driver():
 
     def start(self):
         print('[DRIVER_SIMULATOR {}] Starting'.format(self.driver_name))
-        f1 = open(self.driver_name+"stdout", "w")
-        subprocess.Popen(["./simulator", self.driver_name, self.memory_size, self.compute_size, self.memory_speed, self.context_switch_penalty], stdout=f1)
+        subprocess.Popen(["./simulator", self.driver_name, self.memory_size, self.compute_size, self.memory_speed, self.context_switch_penalty])
         #self.listener.listen()
 
 
