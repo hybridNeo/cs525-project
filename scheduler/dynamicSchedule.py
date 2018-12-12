@@ -30,7 +30,8 @@ class taskGraph():
 def dynamicSchedule(taskScheduled, updatedCost, computeCost, tGraph, offset=0):
 
     # Use the offset to reduce the keys.
-    taskScheduled = remOffset(taskScheduled, offset)
+    taskScheduled = remOffsetTS(taskScheduled, offset)
+    updatedCost = remOffsetUC(updatedCost,offset)
 
     # Update compute costs
     computeCost= updateCost(updatedCost, computeCost)
@@ -76,7 +77,7 @@ def dynamicSchedule(taskScheduled, updatedCost, computeCost, tGraph, offset=0):
 
     return OrderedDict(orderedSchedule)
 
-def remOffset(taskScheduled, offset):
+def remOffsetTS(taskScheduled, offset):
     """
         Remove the offset.
     """
@@ -87,6 +88,19 @@ def remOffset(taskScheduled, offset):
         returnDict[key-offset] = taskScheduled[key]
 
     return returnDict
+
+def remOffsetUC(updatedCost, offset):
+    """
+        Remove the offser.
+    """
+    returnList = []
+
+    for cost in updatedCost:
+        node, proc, val = cost
+        assert ((node-offset)>= 0), "Offset seems to be wrong"
+        returnList.append((node-offset,proc,val))
+
+    return returnList
 
 def updateCost(updatedCost, computeCost):
     """
