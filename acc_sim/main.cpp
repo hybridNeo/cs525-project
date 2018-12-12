@@ -40,11 +40,12 @@ int main(int argc, char * argv[]){
             }
             else if (tokens[0] == "contextSwitch"){
                 int taskID = std::stoi(tokens[1]);
+                int targetID = std::stoi(tokens[2]);
                 std::vector<std::shared_ptr<Task>> tasksReplaced;
-                outputFifo << acc.contextSwitch(taskID, tasksReplaced) << " " << tasksReplaced.size() << std::endl;
+                outputFifo << acc.contextSwitch(taskID, tasksReplaced, targetID) << " " << tasksReplaced.size() << std::endl;
                 for (auto taskPtr : tasksReplaced){
                      //std::chrono::duration_cast<std::chrono::minutes>(sec).count()
-                    outputFifo << "taskFlushed" << (std::chrono::duration_cast<std::chrono::milliseconds>(taskPtr->timeToCompletion)).count() << " " << taskPtr->dataSize << " " << taskPtr->computeUnitsRequired << " " << taskPtr->taskID << std::endl;
+                    outputFifo << "taskFlushed: " << (std::chrono::duration_cast<std::chrono::milliseconds>(taskPtr->timeToCompletion)).count() << " " << taskPtr->dataSize << " " << taskPtr->computeUnitsRequired << " " << taskPtr->taskID << std::endl;
                 }
             }
             else if (tokens[0] == "computeCapacityAvailable"){

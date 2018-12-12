@@ -180,9 +180,12 @@ bool compareConsumers(std::shared_ptr<Consumer> c1, std::shared_ptr<Consumer> c2
     return (c1->task->timeToCompletion + c1->task->memoryOverhead >= c2->task->timeToCompletion + c2->task->memoryOverhead);
 }
 
-int AcceleratorSimulator::contextSwitch(int taskID, std::vector<std::shared_ptr<Task>>& tasksReplaced){
+int AcceleratorSimulator::contextSwitch(int taskID, std::vector<std::shared_ptr<Task>>& tasksReplaced, int targetID){
     std::unique_lock<std::mutex> lock(this->resources);
     std::shared_ptr<Task> task;
+    if (taskID == -1 && this->taskQueue.size() > 0){
+        taskID = this->taskQueue[0]->taskID;
+    }
     for (auto it = this->taskQueue.begin() ; it != this->taskQueue.end(); ++it){
         if ((*it)->taskID == taskID){
             task = *it;
@@ -204,12 +207,28 @@ int AcceleratorSimulator::contextSwitch(int taskID, std::vector<std::shared_ptr<
                 double freeCompute = this->computeCapacityAvailableWithLock();
                 double freeMemory = this->memoryAvailableWithLock();
                 int index = 0;
-                while (freeCompute < task->computeUnitsRequired || freeMemory < task->dataSize){
-                    freeCompute += threadQueue[index]->task->computeUnitsRequired;
-                    freeMemory += threadQueue[index]->task->dataSize;
-                    threadQueue[index]->contextSwitchCV.notify_all();
-                    tasksReplaced.push_back(threadQueue[index]->task);
-                    index++;
+                if (targetID == -1) {
+                    while (freeCompute < task->computeUnitsRequired || freeMemory < task->dataSize){
+                        freeCompute += threadQueue[index]->task->computeUnitsRequired;
+                        freeMemory += threadQueue[index]->task->dataSize;
+                        threadQueue[index]->contextSwitchCV.notify_all();
+                        tasksReplaced.push_back(threadQueue[index]->task);
+                        index++;
+                    }
+                } else {
+                    while (index < threadQueue.size()){
+                        if (threadQueue[index]->task->taskID == targetID){
+                            freeCompute += threadQueue[index]->task->computeUnitsRequired;
+                            freeMemory += threadQueue[index]->task->dataSize;
+                            threadQueue[index]->contextSwitchCV.notify_all();
+                            tasksReplaced.push_back(threadQueue[index]->task);
+                            if (freeCompute < task->computeUnitsRequired || freeMemory < task->dataSize){
+                                return 1;
+                            }
+                            break;
+                        }
+                        index++;
+                    }
                 }
                 freeCompute = this->computeCapacityAvailableWithLock();
                 freeMemory = this->memoryAvailableWithLock();

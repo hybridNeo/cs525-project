@@ -129,7 +129,7 @@ class AcceleratorSimulator{
 
         // Pass in a taskID to which the GPU should context switch out of order. Method sleeps to account for 
         // memory copying overhead. Returns -1 if task is not found or already being executed. Else returns 1
-        int contextSwitch(int taskId, std::vector<std::shared_ptr<Task>>& tasksReplaced);
+        int contextSwitch(int taskId, std::vector<std::shared_ptr<Task>>& tasksReplaced, int targetID);
 
         // Returns the compute capacity currently available in the accelerator
         double computeCapacityAvailable();
