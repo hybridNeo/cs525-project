@@ -482,10 +482,10 @@ def main():
         global scheduler
         scheduler = sys.argv[1]
         global performanceVariance
-        if (len(sys.argv) == 3):
-            performanceVariance = (int)(sys.argv[2])
+        if (len(sys.argv) == 4):
+            performanceVariance = (int)(sys.argv[3])
 
-        if(len(sys.argv) >= 2):
+        if(len(sys.argv) <= 2):
             adjMatrix = [[0,1,1,1,1,1,0,0,0,0],
                     [-1,0,0,0,0,0,0,1,1,0],
                     [-1,0,0,0,0,0,1,0,0,0],

@@ -115,7 +115,7 @@ void AcceleratorSimulator::startThread(std::shared_ptr<Task> task){
             task->timeToCompletion -= std::chrono::nanoseconds((int)(variance*task->timeToCompletion.count()));
         }
         if (rand() % highVarianceProbability == 1){
-            task->timeToCompletion *= (2 + ((rand()%highVariancePerf)/100));
+            task->timeToCompletion *= (2.0 + (highVariancePerf/100.0));
         }
         outputFile << "taskStarted: " << task->taskID << " with cost " << (int)(task->timeToCompletion.count()/1000000) << std::endl;
         contextSwitch = consumer->contextSwitchCV.wait_for(contextSwitchLock, task->timeToCompletion);
