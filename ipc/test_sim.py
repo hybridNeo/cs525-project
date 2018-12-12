@@ -7,6 +7,9 @@ import subprocess
 import signal
 
 import sys
+sys.path.insert(0,'../utils/')
+from graph_maker import generate_random_dag, fft_graph
+
 sys.path.insert(0,'../scheduler/')
 import staticSchedule
 import rrSchedule
@@ -217,27 +220,10 @@ class Querier():
 def util(x):
     print (x)
 
-def test_simple():
+def test_simple(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost):
 
-    adjMatrix = [[0,1,1,1,1,1,0,0,0,0],
-                 [-1,0,0,0,0,0,0,1,1,0],
-                 [-1,0,0,0,0,0,1,0,0,0],
-                 [-1,0,0,0,0,0,0,1,1,0],
-                 [-1,0,0,0,0,0,0,0,1,0],
-                 [-1,0,0,0,0,0,0,1,0,0],
-                 [0,0,-1,0,0,0,0,0,0,1],
-                 [0,-1,0,-1,0,-1,0,0,0,1],
-                 [0,-1,0,-1,-1,0,0,0,0,1],
-                 [0,0,0,0,0,0,-1,-1,-1,0]]
-    entryNode = 0
-    exitNode = 9
-    numTasks = 10
-    numProcs = 3
 
     tGraph = staticSchedule.taskGraph(adjMatrix, entryNode, exitNode, numTasks)
-
-    computeCost = [[14,16,9],[13,19,18],[11,13,19],[13,8,17],[12,13,10],
-                        [13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16]]
 
     # computeCost = [[int(i/6) for i in j] for j in computeCost]
     taskSchedule = staticSchedule.staticSchedule(tGraph, computeCost)
@@ -283,27 +269,9 @@ def test_simple():
     return q.duration.value
 
 
-def test_rr():
-
-    adjMatrix = [[0,1,1,1,1,1,0,0,0,0],
-                 [-1,0,0,0,0,0,0,1,1,0],
-                 [-1,0,0,0,0,0,1,0,0,0],
-                 [-1,0,0,0,0,0,0,1,1,0],
-                 [-1,0,0,0,0,0,0,0,1,0],
-                 [-1,0,0,0,0,0,0,1,0,0],
-                 [0,0,-1,0,0,0,0,0,0,1],
-                 [0,-1,0,-1,0,-1,0,0,0,1],
-                 [0,-1,0,-1,-1,0,0,0,0,1],
-                 [0,0,0,0,0,0,-1,-1,-1,0]]
-    entryNode = 0
-    exitNode = 9
-    numTasks = 10
-    numProcs = 3
+def test_rr(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost):
 
     tGraph = rrSchedule.taskGraph(adjMatrix, entryNode, exitNode, numTasks)
-
-    computeCost = [[14,16,9],[13,19,18],[11,13,19],[13,8,17],[12,13,10],
-                        [13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16]]
 
     taskSchedule = rrSchedule.rrSchedule(tGraph, computeCost)
 
@@ -347,26 +315,9 @@ def test_rr():
     #time.sleep(100)
     return q.duration.value
 
-def test_dynamic():
-    adjMatrix = [[0,1,1,1,1,1,0,0,0,0],
-                 [-1,0,0,0,0,0,0,1,1,0],
-                 [-1,0,0,0,0,0,1,0,0,0],
-                 [-1,0,0,0,0,0,0,1,1,0],
-                 [-1,0,0,0,0,0,0,0,1,0],
-                 [-1,0,0,0,0,0,0,1,0,0],
-                 [0,0,-1,0,0,0,0,0,0,1],
-                 [0,-1,0,-1,0,-1,0,0,0,1],
-                 [0,-1,0,-1,-1,0,0,0,0,1],
-                 [0,0,0,0,0,0,-1,-1,-1,0]]
-    entryNode = 0
-    exitNode = 9
-    numTasks = 10
-    numProcs = 3
+def test_dynamic(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost):
 
     tGraph = staticSchedule.taskGraph(adjMatrix, entryNode, exitNode, numTasks)
-
-    computeCost = [[14,16,9],[13,19,18],[11,13,19],[13,8,17],[12,13,10],
-                        [13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16]]
 
     taskSchedule = staticSchedule.staticSchedule(tGraph, computeCost)
 
@@ -418,15 +369,38 @@ def main():
     else:
         global scheduler
         scheduler = sys.argv[1]
+        if(len(sys.argv) == 2):
+            adjMatrix = [[0,1,1,1,1,1,0,0,0,0],
+                    [-1,0,0,0,0,0,0,1,1,0],
+                    [-1,0,0,0,0,0,1,0,0,0],
+                    [-1,0,0,0,0,0,0,1,1,0],
+                    [-1,0,0,0,0,0,0,0,1,0],
+                    [-1,0,0,0,0,0,0,1,0,0],
+                    [0,0,-1,0,0,0,0,0,0,1],
+                    [0,-1,0,-1,0,-1,0,0,0,1],
+                    [0,-1,0,-1,-1,0,0,0,0,1],
+                    [0,0,0,0,0,0,-1,-1,-1,0]]
+            entryNode = 0
+            exitNode = 9
+            numTasks = 10
+            numProcs = 3
+            computeCost = [[14,16,9],[13,19,18],[11,13,19],[13,8,17],[12,13,10],
+                        [13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16]]
+        else:
+            if(sys.argv[2] == 'fft'):
+                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = fft_graph()
+            else:
+                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, 0.3)
 
+        print("INFO",entryNode,exitNode,numTasks,numProcs,len(computeCost))
         if sys.argv[1] == 'simple':
-            print (test_simple())
+            print (test_simple(adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost))
         elif sys.argv[1] == 'rr':
-            print (test_rr())
+            print (test_rr( adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost))
         elif sys.argv[1] == 'dynamic':
-            print (test_dynamic())
+            print (test_dynamic( adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost))
         elif sys.argv[1] == 'contextSwitch':
-            print (test_dynamic())
+            print (test_dynamic( adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost))
 
 
 
