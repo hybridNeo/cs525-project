@@ -113,15 +113,15 @@ class AcceleratorSimulator{
 
         std::ofstream& outputFile;
 
-        int performanceVariance;
+        int performanceVariance = 20;
         int highVarianceProbability = 4;
-        int highVariancePerf = 100;
+        int highVariancePerf;
 
     public:
         // Constructor with initial properties
         // memorySize in Mb
         // DRAMSpeed in Mb/s
-        AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty, std::ofstream& outputFile, int performanceVariance = 20);
+        AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty, std::ofstream& outputFile, int highVariancePerf = 100);
 
         // Add a task to the end of the queue. Returns -1 if cannot put on accelerator or task is invalid.
         // Else returns the taskID. dataSize in Mb

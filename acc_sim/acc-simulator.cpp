@@ -7,7 +7,7 @@
 #include <iostream>
 #include <time.h>
 
-AcceleratorSimulator::AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty, std::ofstream& outputFifo, int performanceVariance) : outputFile(outputFifo){
+AcceleratorSimulator::AcceleratorSimulator(double memorySize, double computeCapacity, double DRAMSpeed, std::chrono::nanoseconds contextSwitchPenalty, std::ofstream& outputFifo, int highVariancePerf) : outputFile(outputFifo){
     srand(time(0));
     this->memorySize = memorySize;
     this->DRAMSpeed = DRAMSpeed;
@@ -15,7 +15,7 @@ AcceleratorSimulator::AcceleratorSimulator(double memorySize, double computeCapa
     this->contextSwitchPenalty = contextSwitchPenalty;
     this->computeCapacityInUse = 0;
     this->memoryInUse = 0;
-    this->performanceVariance = performanceVariance;
+    this->highVariancePerf = highVariancePerf;
 }
 
 int AcceleratorSimulator::addTask(std::chrono::nanoseconds duration, double dataSize, double computeUnitsRequired, int taskID){

@@ -22,7 +22,7 @@ import os
 
 manager = Manager()
 scheduler = ""
-performanceVariance = 20
+performanceVariance = 100
 
 def start_drivers(drivers):
     d = []
