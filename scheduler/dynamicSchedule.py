@@ -73,7 +73,7 @@ def dynamicSchedule(taskScheduled, updatedCost, computeCost, tGraph, offset=0):
         # print("Added the task schedule", taskSchedule[node])
 
     # Create an ordered Dictionary
-    orderedSchedule = [(key+offset, taskSchedule[key]) for key in scheduleOrder]
+    orderedSchedule = [((int)(key+offset), taskSchedule[key]) for key in scheduleOrder]
 
     return OrderedDict(orderedSchedule)
 
@@ -83,9 +83,9 @@ def remOffsetTS(taskScheduled, offset):
     """
     returnDict = {}
 
-    for key in taskScheduled:
+    for key, val in taskScheduled.items():
         assert ((key-offset)>= 0), "Offset seems to be wrong"
-        returnDict[key-offset] = taskScheduled[key]
+        returnDict[(int)(key-offset)] = taskScheduled[key]
 
     return returnDict
 
@@ -98,7 +98,7 @@ def remOffsetUC(updatedCost, offset):
     for cost in updatedCost:
         node, proc, val = cost
         assert ((node-offset)>= 0), "Offset seems to be wrong"
-        returnList.append((node-offset,proc,val))
+        returnList.append(((int)(node-offset),proc,val))
 
     return returnList
 

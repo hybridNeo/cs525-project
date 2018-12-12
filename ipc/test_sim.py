@@ -63,6 +63,7 @@ class Querier():
         self.dagPending = manager.list([0 for i in range(self.dagCount)])
 
     def startedTask(self, taskID, taskDuration, taskVal):
+        print (taskID, taskDuration)
         self.progressTasks[taskID] = taskVal
         found = False
         for index in range(len(self.updatedCostList)):
