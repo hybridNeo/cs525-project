@@ -28,8 +28,9 @@ def generate_random_dag(numTasks, numProcs, factor):
             adjMatrix[i][dep] = 1
             adjMatrix[dep][i] = -1
     compute_cost = [[randint(costLow, costHigh) for i in range(3)] for j in range(numTasks)]
-    tGraph = taskGraph(adjMatrix, entryNode, exitNode, numTasks)
-    return tGraph, compute_cost
+    print_graph(adjMatrix)
+    #tGraph = taskGraph(adjMatrix, entryNode, exitNode, numTasks)
+    return adjMatrix, entryNode, exitNode, numTasks, numProcs, compute_cost
 
 def fft_graph():
     '''
@@ -57,10 +58,10 @@ def fft_graph():
     numTasks = 15
     numProcs = 3
     print_graph(adjMatrix)
-    tGraph = taskGraph(adjMatrix, entryNode, exitNode, numTasks)
+    # tGraph = taskGraph(adjMatrix, entryNode, exitNode, numTasks)
 
     computeCost = [[14,16,9],[13,19,18],[11,13,19],[13,8,17],[12,13,10],[13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16], [13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16]]
-    return tGraph, computeCost
+    return adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost
 
 if __name__ == '__main__':
     generate_random_dag(15,3,0.2)
