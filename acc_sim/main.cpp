@@ -7,8 +7,8 @@
 #include <iterator>
 
 int main(int argc, char * argv[]){
-    if (argc != 5 && argc != 6){
-        std::cout << "Usage: " << argv[0] << " <driverName> <memorySize in MB> <computeCapacity> <DRAMSpeed in Mb/s> <contextSwitchPenalty in milliseconds (optional)> \n";
+    if (argc != 6 && argc != 7){
+        std::cout << "Usage: " << argv[0] << " <driverName> <memorySize in MB> <computeCapacity> <DRAMSpeed in Mb/s> <performanceVariance> <contextSwitchPenalty in milliseconds (optional)> \n";
         return 0;
     } 
     std::string fileInput = "req_" + (std::string(argv[1]));
@@ -16,13 +16,14 @@ int main(int argc, char * argv[]){
     int memorySize = atoi(argv[2]);
     int computeCapacity = atoi(argv[3]);
     int DRAMSpeed = atoi(argv[4]);
+    int performanceVariance = atoi(argv[5]);
     int contextSwitchPenalty = 0;
-    if (argc == 6){
-        int contextSwitchPenalty = atoi(argv[5]);
+    if (argc == 7){
+        int contextSwitchPenalty = atoi(argv[6]);
     } 
     std::ofstream outputFifo(fileOutput);
     std::ifstream inputFifo(fileInput);
-    AcceleratorSimulator acc(memorySize, computeCapacity, DRAMSpeed, std::chrono::milliseconds(contextSwitchPenalty), outputFifo);
+    AcceleratorSimulator acc(memorySize, computeCapacity, DRAMSpeed, std::chrono::milliseconds(contextSwitchPenalty), outputFifo, performanceVariance);
     std::string line;
     if (inputFifo.is_open())
     {

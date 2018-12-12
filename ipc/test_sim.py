@@ -22,6 +22,7 @@ import os
 
 manager = Manager()
 scheduler = ""
+performanceVariance = 20
 
 def start_drivers(drivers):
     d = []
@@ -287,7 +288,7 @@ def test_simple(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost)
         ]
 
     for i in range(numProcs):
-        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0))
+        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0, performanceVariance))
 
     q = Querier()
     # lambda x: (x%2 == 0)
@@ -336,7 +337,7 @@ def test_rr(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost):
         ]
 
     for i in range(numProcs):
-        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0))
+        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0, performanceVariance))
 
     q = Querier()
     # lambda x: (x%2 == 0)
@@ -384,7 +385,7 @@ def test_dynamic(adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost
         ]
 
     for i in range(numProcs):
-        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0))
+        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0, performanceVariance))
 
     q = Querier(computeCost, tGraph, len(drivers))
     # lambda x: (x%2 == 0)
@@ -435,7 +436,7 @@ def test_contextSwitch(adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCos
         ]
 
     for i in range(numProcs):
-        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0))
+        drivers.append((chr(ord('a') + i), 100, 50, 10000, 0, performanceVariance))
 
     dagCount = 2
     singleDagNodeCount = len(taskSchedule)/2
@@ -480,7 +481,11 @@ def main():
     else:
         global scheduler
         scheduler = sys.argv[1]
-        if(len(sys.argv) == 2):
+        global performanceVariance
+        if (len(sys.argv) == 3):
+            performanceVariance = (int)(sys.argv[2])
+
+        if(len(sys.argv) >= 2):
             adjMatrix = [[0,1,1,1,1,1,0,0,0,0],
                     [-1,0,0,0,0,0,0,1,1,0],
                     [-1,0,0,0,0,0,1,0,0,0],
