@@ -8,7 +8,7 @@ import signal
 
 import sys
 sys.path.insert(0,'../utils/')
-from graph_maker import generate_random_dag, fft_graph, mpeg_graph, gauss_graph
+from graph_maker import generate_random_dag, fft_graph, mpeg_graph, gauss_graph, mp3_graph
 
 sys.path.insert(0,'../scheduler/')
 import staticSchedule
@@ -504,6 +504,8 @@ def main():
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = mpeg_graph()
             elif(sys.argv[2] == 'gauss'):
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = gauss_graph()
+            elif(sys.argv[2] == 'mp3'):
+                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = mp3_graph()
             else:
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, 1)
 

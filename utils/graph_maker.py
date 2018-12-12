@@ -137,6 +137,37 @@ def gauss_graph():
 
     return adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost
 
+def mp3_graph():
+    """
+      mp3 graph
+    """
+
+    adjMatrix = [
+            [0,1,1,1,1,0,0,0,0,0,0,0,0],
+            [-1,0,0,0,0,1,0,0,0,1,0,0,0],
+            [-1,0,0,0,0,0,1,0,0,0,0,0,0],
+            [-1,0,0,0,0,0,0,0,0,0,1,0,0],
+            [-1,0,0,0,0,0,0,1,0,0,0,0,0],
+            [0,-1,0,0,0,0,0,0,1,0,0,0,0],
+            [0,0,-1,0,0,0,0,0,0,1,0,0,0],
+            [0,0,0,0,-1,0,0,0,0,0,0,1,0],
+            [0,0,0,0,0,-1,0,0,0,-1,0,0,1],
+            [0,-1,0,0,0,0,-1,0,1,0,0,0,0],
+            [0,0,0,-1,0,0,0,0,0,0,0,0,1],
+            [0,0,0,0,0,0,0,-1,0,0,0,0,1],
+            [0,0,0,0,0,0,0,0,-1,0,-1,-1,0],
+
+    entryNode = 0
+    exitNode = 12
+    numTasks = 13
+    numProcs = 3
+    print_graph(adjMatrix)
+    # tGraph = taskGraph(adjMatrix, entryNode, exitNode, numTasks)
+
+    computeCost = [[14,16,9],[13,19,18],[11,13,19],[13,8,17],[12,13,10],[13,16,9],[7,15,11],[5,11,14],[18,12,20],[21,7,16], [13,16,9],[7,15,11],[5,11,14]]
+
+    return adjMatrix, entryNode, exitNode, numTasks, numProcs, computeCost
+
 if __name__ == '__main__':
     generate_random_dag(15,3,0.2)
 
