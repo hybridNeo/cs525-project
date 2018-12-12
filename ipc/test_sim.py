@@ -488,6 +488,8 @@ def main():
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = fft_graph()
             elif(sys.argv[2] == 'mpeg'):
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = mpeg_graph()
+            elif(sys.argv[2] == 'gauss'):
+                adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = gauss_graph()
             else:
                 adjMatrix,entryNode,exitNode,numTasks,numProcs,computeCost = generate_random_dag(int(sys.argv[2]), 3, 1)
 
